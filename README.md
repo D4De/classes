@@ -1,12 +1,40 @@
-# CLASSES
+# Classes
+CLASSES (Cross-Layer AnalysiS framework for Soft-Errors effectS in CNNs), a novel cross-layer framework for an early, accurate and fast reliability analysis of CNNs accelerated onto GPUs when affected by SEUs.
+A theoretical description of the implemented framework can be found in:
+C. Bolchini, L. Cassano, A. Miele and A. Toschi, "Fast and Accurate Error Simulation for CNNs Against Soft Errors," in IEEE Transactions on Computers, 2022, doi: 10.1109/TC.2022.3184274. <br>
+
+If you use Classes in your research, we would appreciate a citation to:
+
+>@ARTICLE{bc+2022ea,<br>
+>  author={Bolchini, Cristiana and Cassano, Luca and Miele, Antonio and Toschi, Alessandro},<br>
+>  journal={IEEE Transactions on Computers}, <br>
+>  title={{Fast and Accurate Error Simulation for CNNs Against Soft Errors}}, <br>
+>  year={2022},<br>
+>  volume={},<br>
+>  number={},<br>
+>  pages={1-14},<br>
+>  doi={10.1109/TC.2022.3184274}<br>
+>}
 
 ## Table of Contents
 
+1. [Copyright & License](#copyright--license)
 1. [Dependencies](#dependencies)
 2. [Installation](#installation)
 3. [Usage](#usage)
     1. [TensorFlow2 - As a K function](#as-a-k-function)
     2. [TensorFlow2 - As a layer](#as-a-layer)
+
+## Copyright & License
+
+Copyright (C) 2023 Politecnico di Milano.
+
+This framework is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+
+This framework is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the [GNU General Public License](https://www.gnu.org/licenses/) for more details.
+
+Neither the name of Politecnico di Milano nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+
 ## Dependencies 
 The following libraries are required in order to correctly use the framework. <br>
 N.B. This framework has been developed for TensorFlow1, TensorFlow2 and PyTorch. If you want to use it with one of the frameworks you don't need to install also the others.
@@ -23,26 +51,7 @@ To install the framework you only need to clone the repository
 ```
 git clone https://github.com/D4De/CLASSES.git
 ```
-
-We suggest to create a conda environment with all the required packages. 
-
-### Ubuntu
-```
-curl https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -o Miniconda3-latest-Linux-x86_64.sh
-bash Miniconda3-latest-Linux-x86_64.sh
-conda create --name classes python=3.9
-conda activate classes
-pip install numpy
-```
-### MacOS
-
-```
-curl https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh -o Miniconda3-latest-MacOSX-x86_64.sh
-bash Miniconda3-latest-MacOSX-x86_64.sh
-conda create --name classes python=3.9
-conda activate classes
-pip install numpy
-```
+and import the 
 
 ## Usage
 
