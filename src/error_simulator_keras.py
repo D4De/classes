@@ -1,13 +1,47 @@
 import tensorflow as tf
-from injection_sites_generator import *
-from random import random
+import numpy as np
+from src.injection_sites_generator import InjectableSite, InjectionSitesGenerator
 
+def create_injection_sites_layer_simulator(num_requested_injection_sites, layer_type, layer_output_shape_cf,
+                           layer_output_shape_cl):
+    def __generate_injection_sites(sites_count, layer_type, size, models_mode=''):
 
-class FaultInjector(tf.keras.layers.Layer):
+        injection_site = InjectableSite(layer_type, '', size)
+        try:
+            injection_sites, cardinality, pattern = InjectionSitesGenerator([injection_site], models_mode) \
+                .generate_random_injection_sites(sites_count)
+        except:
+            return []
+        return injection_sites, cardinality, pattern
+
+    available_injection_sites = []
+    masks = []
+
+    for _ in range(num_requested_injection_sites):
+        curr_injection_sites, cardinality, pattern = __generate_injection_sites(1, layer_type, layer_output_shape_cf)
+        shape = eval(layer_output_shape_cl.replace('None', '1'))
+        curr_inj_nump = np.zeros(shape=shape[1:])
+        curr_mask = np.ones(shape=shape[1:])
+
+        if len(curr_injection_sites) > 0:
+            for idx, value in curr_injection_sites[0].get_indexes_values():
+                channel_last_idx = (idx[0], idx[2], idx[3], idx[1])
+                if value.value_type == '[-1,1]':
+                    curr_inj_nump[channel_last_idx[1:]] += value.raw_value
+                else:
+                    curr_mask[channel_last_idx[1:]] = 0
+                    curr_inj_nump[channel_last_idx[1:]] += value.raw_value
+
+            available_injection_sites.append(curr_inj_nump)
+            masks.append(curr_mask)
+
+    return available_injection_sites, masks
+
+class ErrorSimulator(tf.keras.layers.Layer):
 
     def __init__(self, available_injection_sites, masks, num_inj_sites, **kwargs):
 
-        super(FaultInjector, self).__init__(**kwargs)
+        super(ErrorSimulator, self).__init__(**kwargs)
         self.__num_inj_sites = num_inj_sites
         self.__available_injection_sites = []
         self.__masks = []
@@ -26,5 +60,5 @@ class FaultInjector(tf.keras.layers.Layer):
 
         random_tensor = tf.gather(self.__available_injection_sites, random_index)
         random_mask = tf.gather(self.__masks, random_index)
-        return [inputs * random_mask + random_tensor, random_tensor, random_mask,]
+        return [inputs * random_mask + random_tensor, random_tensor, random_mask]
 

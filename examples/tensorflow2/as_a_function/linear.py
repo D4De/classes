@@ -71,13 +71,6 @@ def load_data():
 
     return x_train, y_train, x_val, y_val
 
-
-def train_model(model, x_train, y_train, x_val, y_val, batch_size, epochs, save_path):
-    model.compile(optimizer='adam', loss=losses.sparse_categorical_crossentropy, metrics=['accuracy'])
-    history = model.fit(x_train, y_train, batch_size=batch_size, epochs=epochs, validation_data=(x_val, y_val))
-    keras.models.save_model(model, save_path)
-
-
 def inject_layer(model, img, selected_layer_idx, injection_model, layer_output_shape_cf):
     get_selected_layer_output = K.function([model.layers[0].input], [model.layers[selected_layer_idx].output])
     get_model_output = K.function([model.layers[selected_layer_idx + 1].input], [model.layers[-1].output])

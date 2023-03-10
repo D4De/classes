@@ -19,9 +19,9 @@ If you use Classes in your research, we would appreciate a citation to:
 ## Table of Contents
 
 1. [Copyright & License](#copyright--license)
-1. [Dependencies](#dependencies)
-2. [Installation](#installation)
-3. [Usage](#usage)
+2. [Dependencies](#dependencies)
+3. [Installation](#installation)
+4. [Usage](#usage)
     1. [TensorFlow2 - As a K function](#as-a-k-function)
     2. [TensorFlow2 - As a layer](#as-a-layer)
 
@@ -40,10 +40,10 @@ The following libraries are required in order to correctly use the framework. <b
 N.B. This framework has been developed for TensorFlow1, TensorFlow2 and PyTorch. If you want to use it with one of the frameworks you don't need to install also the others.
 
 1. Python3 
-1. Numpy package
-2. TensorFlow 2.10 or lower
-3. TensorFlow 1
-4. PyTorch
+2. Numpy package
+3. TensorFlow 2.10 or lower
+4. TensorFlow 1
+5. PyTorch
 
 ## Installation 
 
@@ -71,6 +71,9 @@ This function returns three lists:
 - injection_sites: list of injection sites, each injection site has an index and a value, the value itself has two parameters, value_type that describes what kind of value has been selected based on our error models and raw_value which is the numerical value. 
 - cardinalities: list of cardinalities selected.
 - patterns: list of patterns selected.
+
+At the beginning of the [`injection_sites_generator`](src/injection_sites_generator.py) file we placed an enum called OperatorType that defines all the supported
+error models. 
 
 ### Fault injector
 
