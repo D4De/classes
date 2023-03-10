@@ -5,7 +5,7 @@ be used in a model as any other layer.
 ## How to use
 The user has to place the simulator after the targeted layer, passing the following
 two parameters
-1. layer_type: defines the type of layer we are injecting, it must be a element from the OperatorType enum
+1. layer_type: defines the type of layer we are injecting, it must be a element from the [OperatorType](https://github.com/D4De/classes/blob/c0bd0446c8d97ae13a3d5fbffed6b392cd368e19/src/injection_sites_generator.py) enum
 2. size: the output shape of the target layer, must be a string with the following format '(None, channels, width, height)'
 
 After having inserted the layer in the model the user must manually set the weights of the other layers. 

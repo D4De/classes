@@ -27,7 +27,7 @@ They respectively produce the following results
 4. `get_final_output`:  final output of the model starting from the concatenate layer
 
 ## Linear model
-If we have a model with no skip connections ![](linear.png) <br>
+If we have a model with no skip connections <br> ![](linear.png) <br>
 
 the process is straightforward. 
 As an example let's suppose we want to target the second convolutional layer, the only functions we need are the following 

@@ -5,10 +5,10 @@ the graph of the model has been built. For this reason if we want to use the fra
 all the injection sites before the model is created.
 
 ## How to use
-To set up the simulator correctly we invoke the function [`create_injection_sites_layer_simulator`](src/error_simulator_keras.py)
+To set up the simulator correctly we invoke the function [`create_injection_sites_layer_simulator`](../../../src/injection_sites_generator.py)
 that takes the following parameters
 1. num_requested_injection_sites: an integer representing the number of injection sites we want to create
-2. layer_type: an [OperatorType](src/injection_sites_generator.py) element defining what kind of layer we are targeting
+2. layer_type: an [OperatorType](https://github.com/D4De/classes/blob/c0bd0446c8d97ae13a3d5fbffed6b392cd368e19/src/injection_sites_generator.py) element defining what kind of layer we are targeting
 3. layer_output_shape_cf: a string defining the targeted layer output shape in the format (None, channels, width, height) 
 4. layer_output_shape_cl: a string defining the targeted layer output shape in the format (None, width, height, channels)
 
