@@ -2,7 +2,9 @@
 Here we use Keras backend functions to split the execution of the model into two submodels. While this approach is trivial in case of linear models particular attention must be given to models with skip connections. 
 ## U-Net
 
-As an example we show a small U-Net model ![](unet.png) <br>
+As an example we show a small U-Net model <br> ![](unet.png) <br>
+
+
 If we want to inject an error into the third convolutional layer we need to do the following
 1. Execute the model from the input layer through the targeted convolutional layer
 2. Modify the output of the convolutional layer based on the selected injection sites
@@ -25,7 +27,8 @@ They respectively produce the following results
 4. `get_final_output`:  final output of the model starting from the concatenate layer
 
 ## Linear model
-If we have a model with no skip connections ![](linear.png)
+If we have a model with no skip connections ![](linear.png) <br>
+
 the process is straightforward. 
 As an example let's suppose we want to target the second convolutional layer, the only functions we need are the following 
 ```python
@@ -35,4 +38,4 @@ get_output_injected = K.function([model.layers[selected_layer_idx + 1].input], [
 The first one produces the output of the selected layer, we can then corrupt it and pass it to the second function that produces the final output of the model.
 
 ## Examples
-`lenet.py` and `small_unet.py` are fully documented examples.
+`linear.py` and `small_unet.py` are fully documented examples.

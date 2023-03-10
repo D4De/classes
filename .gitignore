@@ -1,2 +1,4 @@
 .DS_STORE
 src/__pycache__
+.idea
+examples/pytorch/mnist_data

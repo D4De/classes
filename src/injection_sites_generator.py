@@ -2,15 +2,12 @@ import os
 import json
 from collections import OrderedDict
 import numpy as np
-import tensorflow as tf
-import time
 import enum
 import operator
 import functools
 import traceback
 import struct
 import os.path
-from sys import exit
 
 
 class OperatorType(enum.Enum):
