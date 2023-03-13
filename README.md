@@ -51,10 +51,32 @@ To install the framework you only need to clone the repository
 ```
 git clone https://github.com/D4De/CLASSES.git
 ```
-and import the 
+and import the `src` folder.
 
+## How it works
+To fully understand how Classes works we strongly suggest to read our paper _Fast and Accurate Error Simulation for CNNs Against Soft Errors_.
+Nonetheless, we want to provide a small description of its operation. 
+The following image provides a high level representation of the whole framework, we executed an error injection campaign
+at GPU level using NVBitFI for each of the [supported layers](#operators-supported) in order to create a database of error models.
+<br>
+![](framework.png)
+<br>
+These models are then used by Classes in conjunction with either TensorFlow or PyTorch to simulate the presence of an error
+during the execution of a given model.
+
+Here we can see more in depth how Classes works.
+<br>
+![](classes.png)
+<br>
+It uses the concept of a saboteur, either developed [as a layer](#as-a-layer) or [as a backend function](#as-a-k-function).
+The idea is to interrupt the execution of the model after the target layer has been executed, corrupt the output obtained
+up until that point and then resume the execution. For this reason the error models adopted represent the effect of an error at the
+output of each layer.
+
+Due to how TensorFlow2 works a layer could contain both an operator and an activation function, to target each part the 
+user of Classes must execute two distinct campaign selecting different [OperatorType](src/operators.py) accordingly to
+the components of the target layer.
 ## Usage
-
 The framework is composed by two distinct modules, the injection sites generator and the error simulator. The first one, as the name suggests, is responsible for the creaton of the injection sites and it is common among all the different implementations of the error simulator. The error simulator itself has been implemented in four different ways in order to work with both TensorFlow (1 and 2) and PyTorch. We provide here an high level description of both modules, a more precise description with examples can be found in the `example` folder. 
 
 ### Injection sites generator 
@@ -102,3 +124,8 @@ If the model is not linear (e.g. a unet) this approach requires us to make sure 
 ### As a layer
 
 We also developed the injector as a layer that can be placed into the module like any other keras layer. This approach simplifies the process in case of models with skip connections since we do not need to manually restore them but it has some drawbacks. The most important one is that due to how TensorFlow2 works we are not able to generate injection sites each time we perform a prediction, instead we need to create them at setup time and pass them as inputs to the layer. The injector will randomly select one at each prediction.
+
+### PyTorch
+### As a layer
+For the PyTorch version of the framework we only developed the layer version since we can freely execute python code
+during inference thus avoiding the problem of creating all the error models beforehand.
