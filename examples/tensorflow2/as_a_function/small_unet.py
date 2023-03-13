@@ -1,5 +1,3 @@
-# Tiny Unet implementation?
-
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
@@ -83,38 +81,7 @@ def build_tiny_unet(output_channels):
     return unet_model
 
 
-def normalize(input_image, input_mask):
-    input_image = tf.cast(input_image, tf.float32) / 255.0
-    input_mask -= 1
-    return input_image, input_mask
-
-
-def load_image(datapoint):
-    input_image = tf.image.resize(datapoint['image'], (128, 128))
-    input_mask = tf.image.resize(
-        datapoint['segmentation_mask'],
-        (128, 128),
-        method=tf.image.ResizeMethod.NEAREST_NEIGHBOR,
-    )
-
-    input_image, input_mask = normalize(input_image, input_mask)
-
-    return input_image, input_mask
-
-
-class Augment(tf.keras.layers.Layer):
-    def __init__(self, seed=42):
-        super().__init__()
-        self.augment_inputs = tf.keras.layers.RandomFlip(mode="horizontal", seed=seed)
-        self.augment_labels = tf.keras.layers.RandomFlip(mode="horizontal", seed=seed)
-
-    def call(self, inputs, labels):
-        inputs = self.augment_inputs(inputs)
-        labels = self.augment_labels(labels)
-        return inputs, labels
-
-
-def load_img():
+def load_images():
     """
     Dummy function, it should load the dataset that the model should use
     """
@@ -131,7 +98,7 @@ def evaluate_output(val):
 def main():
     model = keras.models.load_model('../tiny_unet.h5', compile=False)
 
-    img = load_img()
+    img = load_images()
     selected_layer_idx = 5
     conv2_idx = 2
     conv2d_transpose_idx = 7
