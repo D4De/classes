@@ -66,4 +66,6 @@ for layer_name in model_base_layers:
 ```
 
 ## Example
-A complete and fully documented example that shows how to use the ErrorSimulator can be found in [`linear.py`](linear.py)
+A complete and fully documented example that shows how to use the ErrorSimulator can be found in [`linear.py`](linear.py).
+We do not provide an example specifically for a model with skip connections since, unlike the version of the framework as 
+a function, the steps are exactly the same. 

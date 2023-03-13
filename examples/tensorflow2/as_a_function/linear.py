@@ -2,9 +2,7 @@ import tensorflow as tf
 from tensorflow import keras
 from keras import datasets, layers, models, losses
 from keras import backend as K
-import numpy as np
 
-import sys
 from src.injection_sites_generator import *
 
 

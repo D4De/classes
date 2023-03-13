@@ -8,7 +8,7 @@ import traceback
 import struct
 import os.path
 
-from operators import OperatorType
+from src.operators import OperatorType
 
 
 class InjectableSite(object):
