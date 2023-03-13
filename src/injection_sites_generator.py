@@ -2,100 +2,13 @@ import os
 import json
 from collections import OrderedDict
 import numpy as np
-import enum
 import operator
 import functools
 import traceback
 import struct
 import os.path
 
-
-class OperatorType(enum.Enum):
-    """
-    The TensorFlow's injectables operators.
-    This class stores the type (name of the operator) and allows
-    to convert the operator type from TensorFlow's name to CAFFE model's name.
-    """
-    Conv2D1x1 = 1  # Convolution 2D with kernel size of 1.
-    Conv2D3x3 = 2  # Convolution 2D with kernel size of 3.
-    Conv2D3x3S2 = 3  # Convolution 2D with kernel size of 3 and stride of 2.
-    AddV2 = 4  # Add between two tensors.
-    BiasAdd = 5  # Add between a tensor and a vector.
-    Mul = 6  # Mul between a tensor and a scalar.
-    FusedBatchNormV3 = 7  # Batch normalization.
-    RealDiv = 8  # Division between a tensor and a scalar.
-    Exp = 9  # Exp activation function.
-    LeakyRelu = 10  # Leaky Relu activation function.
-    Sigmoid = 11  # Sigmoid activation function.
-    Add = 12  # Add between two tensors.
-    Conv2D = 13
-    FusedBatchNorm = 14
-
-    def __str__(self):
-        return self.name
-
-    def __repr__(self):
-        return self.name
-
-    def get_model_name(self):
-        """
-        Returns the CAFFE model's name from the TensorFlow's operator type.
-
-        Returns:
-            [str] -- The CAFFE model's name.
-        """
-        # Switch statement that map each TF's operator type to the model names
-        # used in the simulations.
-        if self == OperatorType.Conv2D1x1:
-            return "S1_convolution"
-        elif self == OperatorType.Conv2D3x3:
-            return "S2_convolution"
-        elif self == OperatorType.Conv2D3x3S2:
-            return "S3_convolution"
-        elif self == OperatorType.AddV2:
-            return "S1_add"
-        elif self == OperatorType.BiasAdd:
-            return "S1_biasadd"
-        elif self == OperatorType.Mul:
-            return "S1_mul"
-        elif self == OperatorType.FusedBatchNormV3:
-            return "S1_batch_norm"
-        elif self == OperatorType.Exp:
-            return "S1_exp"
-        elif self == OperatorType.LeakyRelu:
-            return "S1_leaky_relu"
-        elif self == OperatorType.Sigmoid:
-            return "S1_sigmoid"
-        elif self == OperatorType.RealDiv:
-            return "S1_div"
-        elif self == OperatorType.Add:
-            return "S2_add"
-        elif self == OperatorType.Conv2D:
-            return "S1_convolution"
-        elif self == OperatorType.FusedBatchNorm:
-            return "S1_batch_norm"
-        else:
-            raise ValueError("Unable to find a model for this operator: {}".format(self))
-
-    @staticmethod
-    def all():
-        """
-        Returns all the types as list.
-
-        Returns:
-            [list] -- List of operator types.
-        """
-        return list(OperatorType)
-
-    @staticmethod
-    def all_aliases():
-        """
-        Returns the model's names associated to each operator type.
-
-        Returns:
-            [list] -- List of model's names
-        """
-        return [operator.get_model_name() for operator in OperatorType.all()]
+from operators import OperatorType
 
 
 class InjectableSite(object):
@@ -240,7 +153,7 @@ operator_names_table = {
     "S2_convolution": "Conv2D3x3",
     "S3_convolution": "Conv2D3x3S2",
     "S1_convolution_test": "Conv2D1x1"
-    }
+}
 
 NAN = "NaN"
 ZEROES = "Zeroes"
@@ -308,7 +221,7 @@ class InjectionSitesGenerator(object):
             except:
                 return o.__dict__
 
-        #with open("injection_sites.json", "w") as injection_sites_json_file:
+        # with open("injection_sites.json", "w") as injection_sites_json_file:
         #    json.dump(injection_sites, injection_sites_json_file, default=dumper)
         return injection_sites, cardinalities, patterns
 
@@ -587,7 +500,7 @@ class InjectionSitesGenerator(object):
                 return [
                     np.unravel_index(index + random_feature_map * feature_map_size, shape=output_size)
                     for index in indexes
-                    ]
+                ]
             elif fault_type == MULTIPLE_FEATURE_MAPS_BULLET_WAKE:
                 max_feature_map_offset = int(patterns["MAX"])
                 if max_feature_map_offset >= output_size[1]:
@@ -605,7 +518,7 @@ class InjectionSitesGenerator(object):
                 return [
                     np.unravel_index(random_index + feature_map_index * feature_map_size, shape=output_size)
                     for feature_map_index in feature_map_indexes
-                    ]
+                ]
             elif fault_type == MULTIPLE_FEATURE_MAPS_BLOCK:
                 max_block_offset = int(patterns["MAX"])
                 if max_block_offset * 16 >= max_linear_index:
@@ -618,14 +531,14 @@ class InjectionSitesGenerator(object):
                 return [
                     np.unravel_index(index, shape=output_size)
                     for index in indexes
-                    ]
+                ]
             elif fault_type == MULTIPLE_FEATURE_MAPS_SHATTER_GLASS:
                 max_offsets = [
                     int(patterns["MAX"][0]),
                     int(patterns["MAX"][1]),
                     int(patterns["MAX"][2]),
                     int(patterns["MAX"][3])
-                    ]
+                ]
                 try:
                     feature_map_indexes = np.random.choice(output_size[1], replace=False, size=max_offsets[0])
                 except:
@@ -633,7 +546,7 @@ class InjectionSitesGenerator(object):
                 common_index = np.random.randint(low=0, high=output_size[2] * output_size[3])
                 random_feature_map = np.random.choice(feature_map_indexes)
                 remainder = cardinality - len(feature_map_indexes)
-               # print("offsets max_offsets[2] {}, max_offsets[3] {}".format(max_offsets[2], max_offsets[3]))
+                # print("offsets max_offsets[2] {}, max_offsets[3] {}".format(max_offsets[2], max_offsets[3]))
                 choices = list(range(max_offsets[2], max_offsets[3]))
                 choices.remove(0)
                 offsets = np.random.choice(choices, size=remainder)
@@ -646,7 +559,7 @@ class InjectionSitesGenerator(object):
                 return [
                     np.unravel_index(index, shape=output_size)
                     for index in indexes
-                    ]
+                ]
             elif fault_type == MULTIPLE_FEATURE_MAPS_QUASI_SHATTER_GLASS:
                 max_offsets = int(patterns["MAX"])
                 feature_map_indexes = np.random.choice(output_size[1], replace=False, size=max_offsets)
@@ -665,13 +578,13 @@ class InjectionSitesGenerator(object):
                 return [
                     np.unravel_index(index, shape=output_size)
                     for index in indexes
-                    ]
+                ]
             else:
                 indexes = np.random.choice(max_linear_index, size=cardinality, replace=False)
                 return [
                     np.unravel_index(index, shape=output_size)
                     for index in indexes
-                    ]
+                ]
 
         max_linear_index = multiply_reduce(output_size)
         if cardinality == 1:
@@ -699,11 +612,11 @@ class InjectionSitesGenerator(object):
                     indexes = [
                         random_index + offset
                         for offset in pattern
-                        ]
+                    ]
                     return [
                         np.unravel_index(index, shape=output_size)
                         for index in indexes
-                        ]
+                    ]
                 elif fault_type == SAME_FEATURE_MAP_SAME_COLUMN:
                     assert pattern[-1] <= output_size[3]
                     random_feature_map = np.random.randint(0, output_size[1])
@@ -711,11 +624,11 @@ class InjectionSitesGenerator(object):
                     indexes = [
                         random_index + offset * output_size[3]
                         for offset in pattern
-                        ]
+                    ]
                     return [
                         np.unravel_index(index, shape=output_size)
                         for index in indexes
-                        ]
+                    ]
                 elif fault_type == SAME_FEATURE_MAP_BLOCK:
                     # TODO da rivedere questo assert
                     assert pattern[-1] * 16 <= output_size[2] * output_size[3]
@@ -724,11 +637,11 @@ class InjectionSitesGenerator(object):
                     indexes = [
                         random_index + offset * output_size[3]
                         for offset in pattern
-                        ]
+                    ]
                     return [
                         np.unravel_index(index, shape=output_size)
                         for index in indexes
-                        ]
+                    ]
                 elif fault_type == SAME_FEATURE_MAP_RANDOM:
                     random_feature_map = np.random.randint(0, output_size[1])
                     indexes = np.random.choice(output_size[2] * output_size[3], replace=False, size=cardinality)
@@ -736,7 +649,7 @@ class InjectionSitesGenerator(object):
                         np.unravel_index(index + random_feature_map * output_size[2] * output_size[3],
                                          shape=output_size)
                         for index in indexes
-                        ]
+                    ]
                 elif fault_type == MULTIPLE_FEATURE_MAPS_BULLET_WAKE:
                     # assert pattern[-1] < output_size[1]
                     if pattern[-1] >= output_size[1]:
@@ -751,11 +664,11 @@ class InjectionSitesGenerator(object):
                     indexes = [
                         random_index + (starting_feature_map_index + offset) * output_size[2] * output_size[3]
                         for offset in pattern
-                        ]
+                    ]
                     return [
                         np.unravel_index(index, shape=output_size)
                         for index in indexes
-                        ]
+                    ]
                 elif fault_type == MULTIPLE_FEATURE_MAPS_BLOCK:
                     if max_linear_index < 16 * pattern[-1]:
                         new_card = 0
@@ -804,13 +717,13 @@ class InjectionSitesGenerator(object):
                     return [
                         np.unravel_index(index, shape=output_size)
                         for index in indexes
-                        ]
+                    ]
                 elif fault_type == MULTIPLE_FEATURE_MAPS_UNCATEGORIZED:
                     indexes = np.random.choice(max_linear_index, size=cardinality, replace=False)
                     return [
                         np.unravel_index(index, shape=output_size)
                         for index in indexes
-                        ]
+                    ]
 
 
 if __name__ == "__main__":

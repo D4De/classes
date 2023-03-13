@@ -80,15 +80,14 @@ def load_data():
 
 NUM_INJECTIONS = 100
 NUM = 42
-SELECTED_LAYER_IDX = 3
 
 layer_type = OperatorType['Conv2D']
 layer_output_shape_cf = '(None, 16, 27, 27)'
 layer_output_shape_cl = '(None, 27, 27, 16)'
 
-num_available_injection_sites = NUM_INJECTIONS * 5
+num_requested_injection_sites = NUM_INJECTIONS * 5
 
-available_injection_sites, masks = create_injection_sites_layer_simulator(num_available_injection_sites,
+available_injection_sites, masks = create_injection_sites_layer_simulator(num_requested_injection_sites,
                                                                           layer_type,
                                                                           layer_output_shape_cf, layer_output_shape_cl)
 

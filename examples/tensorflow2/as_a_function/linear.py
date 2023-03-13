@@ -71,13 +71,13 @@ def load_data():
 
     return x_train, y_train, x_val, y_val
 
-def inject_layer(model, img, selected_layer_idx, injection_model, layer_output_shape_cf):
+def inject_layer(model, img, selected_layer_idx, layer_type, layer_output_shape_cf):
     get_selected_layer_output = K.function([model.layers[0].input], [model.layers[selected_layer_idx].output])
     get_model_output = K.function([model.layers[selected_layer_idx + 1].input], [model.layers[-1].output])
 
     output_selected_layer = get_selected_layer_output([np.expand_dims(img, 0)])[0]
 
-    injection_site, cardinality, pattern = generate_injection_sites(1, injection_model, '',
+    injection_site, cardinality, pattern = generate_injection_sites(1, layer_type, '',
                                                                     layer_output_shape_cf)
 
     if len(injection_site) > 0:

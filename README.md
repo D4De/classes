@@ -63,7 +63,7 @@ This module is used to create the injection sites needed for the error simulatio
 `generate_injection_sites(sites_count, layer_type, layer_name, size, models_mode='')`
 its inputs are:
 - sites_count: the number of injection sites to create
-- layer_type: what kind of layer we are injecting, the available layers are the ones defined in the enum `OperatorType`
+- layer_type: what kind of layer we are injecting
 - layer_name: a string representing the layer name, can be empty
 - size: a string that defines the output shape of the layer we want to target. It must be defined with the following format '(None, Channel, Height, Width)' 
 
@@ -71,9 +71,23 @@ This function returns three lists:
 - injection_sites: list of injection sites, each injection site has an index and a value, the value itself has two parameters, value_type that describes what kind of value has been selected based on our error models and raw_value which is the numerical value. 
 - cardinalities: list of cardinalities selected.
 - patterns: list of patterns selected.
-
-At the beginning of the [`injection_sites_generator`](src/injection_sites_generator.py) file we placed an enum called OperatorType that defines all the supported
-error models. 
+- 
+### Operators supported
+The operators supported for the error simulation are the ones described in the enum [`OperatorType`](src/operators.py). Currently, we support the following layers:
+- Conv2D1x1: Convolution 2D with kernel size of 1.
+- Conv2D3x3: Convolution 2D with kernel size of 3.
+- Conv2D3x3S2: Convolution 2D with kernel size of 3 and stride of 2.
+- AddV2: Add between two tensors.
+- BiasAdd: Add between a tensor and a vector.
+- Mul: Multiplication between a tensor and a scalar.
+- FusedBatchNormV3: Batch normalization.
+- RealDiv: Division between a tensor and a scalar.
+- Exp: Exp activation function.
+- LeakyRelu: Leaky Relu activation function.
+- Sigmoid: Sigmoid activation function.
+- Add: Add between two tensors.
+- Conv2D: Convolution that does not fit the previous three descriptions
+- FusedBatchNorm: Batch normalization, needed to support some implementations of the layer
 
 ### Fault injector
 
