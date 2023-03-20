@@ -147,6 +147,9 @@ model_simulator.eval()
 
 dataiter = iter(valid_loader)
 images, labels = next(dataiter)
+
 for _ in range(3):
     outputs = model(images)
     inj_out = model_simulator(images)
+    print(torch.argmax(outputs[1]))
+    print(torch.argmax(inj_out[1]))

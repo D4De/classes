@@ -1,6 +1,6 @@
 from src.injection_sites_generator import *
 import torch.nn as nn
-
+import torch
 
 class Simulator(nn.Module):
     def __init__(self, layer_type, size):
@@ -29,5 +29,5 @@ class Simulator(nn.Module):
                 if value.value_type == '[-1,1]':
                     x[idx] += value.raw_value
                 else:
-                    x[idx] = value.raw_value
+                    x[idx] = torch.from_numpy(np.asarray(value.raw_value))
         return x
