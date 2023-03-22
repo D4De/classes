@@ -94,8 +94,8 @@ This function returns three lists:
 - cardinalities: list of cardinalities selected.
 - patterns: list of patterns selected.
 
-### Operators supported
-The operators supported for the error simulation are the ones described in the enum [`OperatorType`](src/operators.py). Currently, we support the following layers:
+### Supported operators
+The operators supported for the error simulation are the ones described in the enum [`OperatorType`](src/operators.py). Currently, we support the following layers (they are the ones used in Yolo, that is the case study considered in the paper):
 - Conv2D1x1: Convolution 2D with kernel size of 1.
 - Conv2D3x3: Convolution 2D with kernel size of 3.
 - Conv2D3x3S2: Convolution 2D with kernel size of 3 and stride of 2.
