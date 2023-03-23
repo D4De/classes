@@ -2,6 +2,7 @@ from src.injection_sites_generator import *
 import torch.nn as nn
 import torch
 
+
 class Simulator(nn.Module):
     def __init__(self, layer_type, size):
         super().__init__()

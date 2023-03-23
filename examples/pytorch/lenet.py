@@ -50,8 +50,8 @@ class LeNet5(nn.Module):
         self.linear2 = nn.Linear(in_features=84, out_features=n_classes)
 
     def forward(self, x):
-        x = self.conv1(x)
-        x = self.tanh1(x)
+        conv1 = self.conv1(x)
+        x = self.tanh1(conv1)
         x = self.pool1(x)
         x = self.conv2(x)
         x = self.tanh2(x)
@@ -63,7 +63,7 @@ class LeNet5(nn.Module):
         x = self.tanh4(x)
         logits = self.linear2(x)
         probs = F.softmax(logits, dim=1)
-        return logits, probs
+        return logits, probs, conv1
 
 
 class LeNet5Simulator(nn.Module):
@@ -88,8 +88,8 @@ class LeNet5Simulator(nn.Module):
 
     def forward(self, x):
         x = self.conv1(x)
-        x = self.simulator(x)
-        x = self.tanh1(x)
+        simulator = self.simulator(x)
+        x = self.tanh1(simulator)
         x = self.pool1(x)
         x = self.conv2(x)
         x = self.tanh2(x)
@@ -101,7 +101,7 @@ class LeNet5Simulator(nn.Module):
         x = self.tanh4(x)
         logits = self.linear2(x)
         probs = F.softmax(logits, dim=1)
-        return logits, probs
+        return logits, probs, simulator
 
 
 def load_datasets():
@@ -134,22 +134,33 @@ def load_datasets():
 
 train_dataset, valid_dataset, train_loader, valid_loader = load_datasets()
 
-model = LeNet5(N_CLASSES)
+device = 'cpu'
+model = LeNet5(N_CLASSES).to('cpu')
 model.load_state_dict(torch.load('lenet.pth'))
-model_simulator = LeNet5Simulator(N_CLASSES, OperatorType['Conv2D'], '(None, 6, 28, 28)')
+model_simulator = LeNet5Simulator(N_CLASSES, OperatorType['Conv2D'], '(None, 6, 28, 28)').to('cpu')
 
-for name, param in model.named_parameters():
-    eval(f'model_simulator.{name.split(".")[0]}').weight = nn.Parameter(
-        torch.ones_like(eval(f'model.{name.split(".")[0]}').weight))
+with torch.no_grad():
+    for name, _ in model.named_parameters():
+        layer_name = name.split('.')[0]
+        eval(f'model_simulator.{layer_name}.weight.copy_(model.{layer_name}.weight)')
+        eval(f'model_simulator.{layer_name}.bias.copy_(model.{layer_name}.bias)')
 
 model.eval()
 model_simulator.eval()
 
-dataiter = iter(valid_loader)
-images, labels = next(dataiter)
+transf = transforms.Compose([transforms.Resize((32, 32)), transforms.ToTensor()])
 
-for _ in range(3):
-    outputs = model(images)
-    inj_out = model_simulator(images)
-    print(torch.argmax(outputs[1]))
-    print(torch.argmax(inj_out[1]))
+test_dataset = datasets.MNIST('data', train=False, transform=transf, download=True)
+
+correct = 0
+# Select a single image from the test dataset
+
+for i in range(1):
+    img, label = test_dataset[i]
+    img = img.unsqueeze(0)
+    output_corr = model_simulator(img)[2]
+    pred = output_corr.argmax(dim=1).item()
+    if pred == label:
+        correct += 1
+
+print(correct)
