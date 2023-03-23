@@ -4,7 +4,15 @@ from keras import datasets, layers, models, losses
 from keras import backend as K
 import numpy as np
 
-import sys
+import os
+import sys 
+
+CLASSES_MODULE_PATH = "../../../"
+WEIGHT_FILE_PATH = "../"
+
+# appending a path
+sys.path.append(CLASSES_MODULE_PATH) #CHANGE THIS LINE
+
 from src.injection_sites_generator import *
 from src.error_simulator_keras import ErrorSimulator, create_injection_sites_layer_simulator
 
@@ -92,7 +100,9 @@ available_injection_sites, masks = create_injection_sites_layer_simulator(num_re
                                                                           layer_output_shape_cf, layer_output_shape_cl)
 
 x_train, y_train, x_val, y_val = load_data()
-model = build_model(x_train[0].shape, saved_weights='weights.h5')
+path_weights = os.path.join(WEIGHT_FILE_PATH,'weights.h5')
+print(f"Load weights from => {path_weights}")
+model = build_model(x_train[0].shape, saved_weights=path_weights)
 model_with_simulator = build_model_with_simulator(x_train[0].shape, available_injection_sites, masks,
                                                   len(available_injection_sites))
 

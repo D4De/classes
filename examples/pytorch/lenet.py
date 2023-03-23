@@ -5,6 +5,16 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
+
+import os
+import sys 
+
+CLASSES_MODULE_PATH = "../../"
+WEIGHT_FILE_PATH = "./"
+
+# appending a path
+sys.path.append(CLASSES_MODULE_PATH) #CHANGE THIS LINE
+
 from src.error_simulator_pytorch import Simulator
 from src.injection_sites_generator import OperatorType
 
@@ -136,7 +146,7 @@ train_dataset, valid_dataset, train_loader, valid_loader = load_datasets()
 
 device = 'cpu'
 model = LeNet5(N_CLASSES).to('cpu')
-model.load_state_dict(torch.load('lenet.pth'))
+model.load_state_dict(torch.load(os.path.join(WEIGHT_FILE_PATH,'lenet.pth')))
 model_simulator = LeNet5Simulator(N_CLASSES, OperatorType['Conv2D'], '(None, 6, 28, 28)').to('cpu')
 
 with torch.no_grad():
@@ -152,15 +162,28 @@ transf = transforms.Compose([transforms.Resize((32, 32)), transforms.ToTensor()]
 
 test_dataset = datasets.MNIST('data', train=False, transform=transf, download=True)
 
-correct = 0
-# Select a single image from the test dataset
 
-for i in range(1):
+correct = 0
+fault_robust_runs = 0
+
+# Select a single image from the test dataset
+RUNS = 100
+for i in range(RUNS):
     img, label = test_dataset[i]
     img = img.unsqueeze(0)
-    output_corr = model_simulator(img)[2]
+    output_corr = model_simulator(img)[0]
+    output_vanilla = model(img)[0]
+
     pred = output_corr.argmax(dim=1).item()
+    pred_vanilla = output_vanilla.argmax(dim=1).item()
+
+    #print(f" Pred vs Label => ({pred},{label})")
     if pred == label:
         correct += 1
+    
+    if pred == pred_vanilla:
+        fault_robust_runs+=1
 
-print(correct)
+print(f"----------------------------------")
+print(f"Correctly predicted images: {correct} of {RUNS}")
+print(f"Predctions not changed w.r.t Vanilla model: {fault_robust_runs} of {RUNS}")

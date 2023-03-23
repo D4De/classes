@@ -3,6 +3,16 @@ from tensorflow import keras
 from tensorflow.keras import layers
 import tensorflow_datasets as tfds
 from keras import backend as K
+
+import os
+import sys 
+
+CLASSES_MODULE_PATH = "../../../"
+WEIGHT_FILE_PATH = "../"
+
+# appending a path
+sys.path.append(CLASSES_MODULE_PATH) #CHANGE THIS LINE
+
 from src.injection_sites_generator import *
 
 
@@ -96,6 +106,8 @@ def evaluate_output(val):
 
 
 def main():
+    path_weights = os.path.join(WEIGHT_FILE_PATH,'weights.h5')
+    print(f"Load weights from => {path_weights}")
     model = keras.models.load_model('../tiny_unet.h5', compile=False)
 
     img = load_images()

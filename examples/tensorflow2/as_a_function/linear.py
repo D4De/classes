@@ -3,6 +3,15 @@ from tensorflow import keras
 from keras import datasets, layers, models, losses
 from keras import backend as K
 
+import os
+import sys 
+
+CLASSES_MODULE_PATH = "../../../"
+WEIGHT_FILE_PATH = "../"
+
+# appending a path
+sys.path.append(CLASSES_MODULE_PATH) #CHANGE THIS LINE
+
 from src.injection_sites_generator import *
 
 
@@ -96,7 +105,9 @@ NUM = 42
 SELECTED_LAYER_IDX = 3
 
 x_train, y_train, x_val, y_val = load_data()
-model = build_model(x_train[0].shape, saved_weights='weights.h5')
+path_weights = os.path.join(WEIGHT_FILE_PATH,'weights.h5')
+print(f"Load weights from => {path_weights}")
+model = build_model(x_train[0].shape, saved_weights=path_weights)
 errors = 0
 
 for _ in range(NUM_INJECTIONS):
