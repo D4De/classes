@@ -6,7 +6,7 @@ from sklearn.preprocessing import OneHotEncoder
 from tensorflow.keras.datasets import cifar10
 import random
 
-from simulator import fault_injector as simulator
+import src.deprecated.error_simulator_tf1 as simulator
 
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = "3"
@@ -258,11 +258,9 @@ def test(dataset, model):
                             continue
                         
                         results, _, _ = error_sim.inject(
-                            [model[3], model[4], model[5], model[6], model[7], model[8]],
+                            [model[3]],
                             feed_dict)
                         
-                        
-
                         correct_result = golden_digit == np.argmax(results[0][0])
                         if not correct_result:
                             errors += 1
