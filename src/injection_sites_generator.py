@@ -546,7 +546,6 @@ class InjectionSitesGenerator(object):
                 common_index = np.random.randint(low=0, high=output_size[2] * output_size[3])
                 random_feature_map = np.random.choice(feature_map_indexes)
                 remainder = cardinality - len(feature_map_indexes)
-                # print("offsets max_offsets[2] {}, max_offsets[3] {}".format(max_offsets[2], max_offsets[3]))
                 choices = list(range(max_offsets[2], max_offsets[3]))
                 choices.remove(0)
                 offsets = np.random.choice(choices, size=remainder)
@@ -630,7 +629,6 @@ class InjectionSitesGenerator(object):
                         for index in indexes
                     ]
                 elif fault_type == SAME_FEATURE_MAP_BLOCK:
-                    # TODO da rivedere questo assert
                     assert pattern[-1] * 16 <= output_size[2] * output_size[3]
                     random_feature_map = np.random.randint(0, output_size[1])
                     random_index = np.random.randint(0, output_size[2] * output_size[3] - pattern[-1] * 16)
@@ -651,7 +649,6 @@ class InjectionSitesGenerator(object):
                         for index in indexes
                     ]
                 elif fault_type == MULTIPLE_FEATURE_MAPS_BULLET_WAKE:
-                    # assert pattern[-1] < output_size[1]
                     if pattern[-1] >= output_size[1]:
                         new_card = 0
                         for elem in pattern:
@@ -705,7 +702,6 @@ class InjectionSitesGenerator(object):
                         if feature[1][-1] > max_x:
                             max_x = feature[1][-1]
                     random_feature_map = np.random.randint(0, output_size[1] - pattern[-1][0])
-                    # TODO controlla perché max < min a volte
                     random_index = np.random.randint(min_x + 1, output_size[2] * output_size[3] - max_x)
                     indexes = []
                     for feature_pattern in pattern:
@@ -713,7 +709,6 @@ class InjectionSitesGenerator(object):
                             indexes.append(
                                 random_index + offset + (random_feature_map + feature_pattern[0]) * output_size[2] *
                                 output_size[3])
-                            # TODO filtrare gli index rimuovendo quelli < 0
                     return [
                         np.unravel_index(index, shape=output_size)
                         for index in indexes
@@ -725,13 +720,3 @@ class InjectionSitesGenerator(object):
                         for index in indexes
                     ]
 
-
-if __name__ == "__main__":
-    with open("./injectable_sites.json", "r") as injectables_sites_json:
-        injectables_sites = []
-        for injectable_site in json.load(injectables_sites_json):
-            injectables_sites.append(InjectableSite(OperatorType[injectable_site["type"]],
-                                                    injectable_site["name"], injectable_site["size"]))
-
-        pippo = InjectionSitesGenerator(injectables_sites)
-        pippo.generate_random_injection_sites(10000)
