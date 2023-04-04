@@ -179,6 +179,7 @@ class InjectionSitesGenerator(object):
         self.__cardinalities = self.__load_cardinalities()
         self.__corrupted_values_domain = self.__load_corrupted_values_domain(mode)
         self.__spatial_models = self.__load_spatial_models()
+        self.__warp_spatial_models = self.__load_warp_spatial_models()
         self.__debugcardinality = -1
 
     def generate_random_injection_sites(self, size):
@@ -203,7 +204,7 @@ class InjectionSitesGenerator(object):
                     corrupted_values = self.__select_multiple_corrupted_values(
                         self.__corrupted_values_domain[operator_type], cardinality)
                     indexes = self.__select_spatial_pattern(self.__spatial_models[operator_type], cardinality,
-                                                            eval(injectable_site.size))
+                                                            eval(injectable_site.size), self.__random([0, 1], [0.5, 0.5]))
                     for idx, value in zip(indexes, corrupted_values):
                         injection_site.add_injection(idx, value)
                     injection_sites.append(injection_site)
@@ -215,14 +216,6 @@ class InjectionSitesGenerator(object):
                     traceback.print_exc()
                     continue
 
-        def dumper(o):
-            try:
-                return o.to_json()
-            except:
-                return o.__dict__
-
-        # with open("injection_sites.json", "w") as injection_sites_json_file:
-        #    json.dump(injection_sites, injection_sites_json_file, default=dumper)
         return injection_sites, cardinalities, patterns
 
     def __get_models(self):
@@ -245,7 +238,6 @@ class InjectionSitesGenerator(object):
         """
         cardinalities = {}  # Map of cardinalities for each model.
         for model_operator_name in self.__get_models():  # operator_names_table.keys():
-            # print("current model operator name ", model_operator_name)
             # Folders are named as "SX_model", while files are names "model_SX"
             # So, it is needed to reverse the model name to compose the cardinalities file path,
             separator = model_operator_name.index("_")
@@ -258,13 +250,11 @@ class InjectionSitesGenerator(object):
             with open(model_cardinalities_path, "r") as cardinalities_json:
                 model_cardinalities = json.load(cardinalities_json)
 
-                # print(model_cardinalities)
-
-                # Add each cardinalities model to the map.
+                # Add each cardinality model to the map.
                 # The insertion is done in order, so keys (the cardinalities) are sorted
                 # and converted from string (json) to integer.
-                # Only the probability of each cardinality is preserved, the absolute frequence
-                # is not relevent for this problem.
+                # Only the probability of each cardinality is preserved, the absolute frequency
+                # is not relevant for this problem.
                 if operator_names_table[model_operator_name] not in cardinalities:
                     cardinalities[operator_names_table[model_operator_name]] = OrderedDict()
 
@@ -309,7 +299,7 @@ class InjectionSitesGenerator(object):
                     return line
             return ""
 
-        corrupted_values_domain = {}  # Map of models and their corrupted values domain.
+        corrupted_values_domain = {}  # Map of models and their corrupted values' domain.
         for model_operator_name in self.__get_models():
             # The file is simply named as "value_analysis" and is common to each model.
             base_path = os.path.dirname(os.path.realpath(__file__))
@@ -343,6 +333,18 @@ class InjectionSitesGenerator(object):
                     spatial_models[operator_names_table[model_operator_name]] = spatial_model
         return spatial_models
 
+    def __load_warp_spatial_models(self):
+        spatial_models = {}
+        for model_operator_name in self.__get_models():
+            base_path = os.path.dirname(os.path.realpath(__file__))
+            spatial_model_path = base_path + "/models/{}/{}_warp_spatial_model.json".format(model_operator_name,
+                                                                                            model_operator_name)
+            with open(spatial_model_path, "r") as spatial_model_json:
+                spatial_model = json.load(spatial_model_json)
+                if operator_names_table[model_operator_name] not in spatial_models:
+                    spatial_models[operator_names_table[model_operator_name]] = spatial_model
+        return spatial_models
+
     def __unpack_table(self, table):
         """
         Given a lookup table, implemented as a dictionary, it separates the keys from values
@@ -357,7 +359,7 @@ class InjectionSitesGenerator(object):
         keys = []
         values = []
         # Move each pair of key and value to two separate
-        # lists to preverse the order.
+        # lists to keep the order.
         for key, value in table.items():
             keys.append(key)
             values.append(value)
@@ -380,7 +382,7 @@ class InjectionSitesGenerator(object):
             [scalar or list] -- Returns a scalar option if samples is 1, otherwise
             returns a list of options.
         """
-        # Return a random option, or more than one, according to the probabilities distribution.
+        # Return a random option, or more than one, according to the probabilities' distribution.
         # The if is needed because specifying size set to 1 returns an array instead of a scalar.
         # In case of samples > 1, is the intended behavior.
         for i in range(len(probabilities)):
@@ -464,7 +466,7 @@ class InjectionSitesGenerator(object):
         """
         return [self.__select_corrupted_value(model_corrupted_values_domain) for _ in range(size)]
 
-    def __select_spatial_pattern(self, spatial_model, cardinality, output_size):
+    def __select_spatial_pattern(self, spatial_model, cardinality, output_size, is_warp):
         def multiply_reduce(iterable):
             """
             Given an iterable multiplieas each element
@@ -485,8 +487,9 @@ class InjectionSitesGenerator(object):
             for offset in offsets:
                 indexes.append(random_starting_index + offset * scale_factor)
             return [np.unravel_index(index, shape=output_size) for index in indexes]
-
-        def random_pattern(fault_type, output_size, pattern, cardinality):
+        def random_warp_pattern(fault_type, output_size, cardinality):
+            pass
+        def random_pattern(fault_type, output_size, cardinality):
             if fault_type == SAME_FEATURE_MAP_SAME_ROW:
                 return random_same_feature_map(output_size, int(patterns["MAX"]), 1, cardinality)
             elif fault_type == SAME_FEATURE_MAP_SAME_COLUMN:
@@ -543,7 +546,7 @@ class InjectionSitesGenerator(object):
                     feature_map_indexes = np.random.choice(output_size[1], replace=False, size=max_offsets[0])
                 except:
                     feature_map_indexes = np.random.choice(output_size[1], replace=True, size=max_offsets[0])
-                common_index = np.random.randint(low=0, high=output_size[2] * output_size[3])
+                np.random.randint(low=0, high=output_size[2] * output_size[3])
                 random_feature_map = np.random.choice(feature_map_indexes)
                 remainder = cardinality - len(feature_map_indexes)
                 choices = list(range(max_offsets[2], max_offsets[3]))
@@ -562,7 +565,7 @@ class InjectionSitesGenerator(object):
             elif fault_type == MULTIPLE_FEATURE_MAPS_QUASI_SHATTER_GLASS:
                 max_offsets = int(patterns["MAX"])
                 feature_map_indexes = np.random.choice(output_size[1], replace=False, size=max_offsets)
-                common_index = np.random.randint(low=0, high=output_size[2] * output_size[3])
+                np.random.randint(low=0, high=output_size[2] * output_size[3])
                 random_feature_map = np.random.choice(feature_map_indexes)
                 remainder = cardinality - len(feature_map_indexes)
                 choices = range(max_offsets[2], max_offsets[3])
@@ -586,137 +589,139 @@ class InjectionSitesGenerator(object):
                 ]
 
         max_linear_index = multiply_reduce(output_size)
-        if cardinality == 1:
-            self.__debugspatial_model = -1
-            selected_index = np.random.randint(low=0, high=max_linear_index)
-            return [np.unravel_index(selected_index, shape=output_size)]
+        if is_warp:
+            pass
         else:
-            fault_type = self.__random(*self.__unpack_table(spatial_model[str(cardinality)]["FF"]))
-            self.__debugspatial_model = int(fault_type)
-            patterns = spatial_model[str(cardinality)]["PF"][fault_type]
-            fault_type = int(fault_type)
-            if len(patterns) == 2 and "MAX" in patterns and "RANDOM" in patterns:
-                return random_pattern(fault_type, output_size, patterns, cardinality)
-            revised_patterns = patterns.copy()
-            revised_patterns.pop("MAX", None)
-            pattern = self.__random(*self.__unpack_table(revised_patterns))
-            if pattern == "RANDOM":
-                return random_pattern(fault_type, output_size, patterns, cardinality)
+            if cardinality == 1:
+                self.__debugspatial_model = -1
+                selected_index = np.random.randint(low=0, high=max_linear_index)
+                return [np.unravel_index(selected_index, shape=output_size)]
             else:
-                pattern = eval(pattern)
-                if fault_type == SAME_FEATURE_MAP_SAME_ROW:
-                    assert pattern[-1] <= output_size[2] * output_size[3]
-                    random_feature_map = np.random.randint(0, output_size[1])
-                    random_index = np.random.randint(0, output_size[2] * output_size[3] - pattern[-1])
-                    indexes = [
-                        random_index + offset
-                        for offset in pattern
-                    ]
-                    return [
-                        np.unravel_index(index, shape=output_size)
-                        for index in indexes
-                    ]
-                elif fault_type == SAME_FEATURE_MAP_SAME_COLUMN:
-                    assert pattern[-1] <= output_size[3]
-                    random_feature_map = np.random.randint(0, output_size[1])
-                    random_index = np.random.randint(0, output_size[2] * output_size[3] - pattern[-1] * output_size[3])
-                    indexes = [
-                        random_index + offset * output_size[3]
-                        for offset in pattern
-                    ]
-                    return [
-                        np.unravel_index(index, shape=output_size)
-                        for index in indexes
-                    ]
-                elif fault_type == SAME_FEATURE_MAP_BLOCK:
-                    assert pattern[-1] * 16 <= output_size[2] * output_size[3]
-                    random_feature_map = np.random.randint(0, output_size[1])
-                    random_index = np.random.randint(0, output_size[2] * output_size[3] - pattern[-1] * 16)
-                    indexes = [
-                        random_index + offset * output_size[3]
-                        for offset in pattern
-                    ]
-                    return [
-                        np.unravel_index(index, shape=output_size)
-                        for index in indexes
-                    ]
-                elif fault_type == SAME_FEATURE_MAP_RANDOM:
-                    random_feature_map = np.random.randint(0, output_size[1])
-                    indexes = np.random.choice(output_size[2] * output_size[3], replace=False, size=cardinality)
-                    return [
-                        np.unravel_index(index + random_feature_map * output_size[2] * output_size[3],
-                                         shape=output_size)
-                        for index in indexes
-                    ]
-                elif fault_type == MULTIPLE_FEATURE_MAPS_BULLET_WAKE:
-                    if pattern[-1] >= output_size[1]:
-                        new_card = 0
-                        for elem in pattern:
-                            if elem < output_size[1]:
-                                new_card += 1
-                        pattern = pattern[:new_card]
-                        self.__debugcardinality = new_card
-                    starting_feature_map_index = np.random.randint(0, output_size[1] - pattern[-1])
-                    random_index = np.random.randint(0, output_size[2] * output_size[3])
-                    indexes = [
-                        random_index + (starting_feature_map_index + offset) * output_size[2] * output_size[3]
-                        for offset in pattern
-                    ]
-                    return [
-                        np.unravel_index(index, shape=output_size)
-                        for index in indexes
-                    ]
-                elif fault_type == MULTIPLE_FEATURE_MAPS_BLOCK:
-                    if max_linear_index < 16 * pattern[-1]:
-                        new_card = 0
-                        for elem in pattern:
-                            if max_linear_index > elem * 16:
-                                new_card += 1
-                        pattern = pattern[:new_card]
-                        self.__debugcardinality = new_card
-                    random_index = np.random.randint(0, max_linear_index - 16 * pattern[-1])
-                    indexes = [
-                        random_index + 16 * offset
-                        for offset in pattern
-                    ]
-                    return [
-                        np.unravel_index(index, shape=output_size)
-                        for index in indexes
-                    ]
-                elif (
-                        fault_type == MULTIPLE_FEATURE_MAPS_SHATTER_GLASS or
-                        fault_type == MULTIPLE_FEATURE_MAPS_QUASI_SHATTER_GLASS
-                ):
-                    if pattern[-1][0] >= output_size[1]:
-                        new_card = 0
-                        for elem in pattern:
-                            if elem[0] < output_size[1]:
-                                new_card += 1
-                        pattern = pattern[:new_card]
-                    assert pattern[-1][0] < output_size[1]
-                    min_x = 0
-                    max_x = 0
-                    for feature in pattern:
-                        if feature[1][0] < min_x:
-                            min_x = feature[1][0]
-                        if feature[1][-1] > max_x:
-                            max_x = feature[1][-1]
-                    random_feature_map = np.random.randint(0, output_size[1] - pattern[-1][0])
-                    random_index = np.random.randint(min_x + 1, output_size[2] * output_size[3] - max_x)
-                    indexes = []
-                    for feature_pattern in pattern:
-                        for offset in feature_pattern[1]:
-                            indexes.append(
-                                random_index + offset + (random_feature_map + feature_pattern[0]) * output_size[2] *
-                                output_size[3])
-                    return [
-                        np.unravel_index(index, shape=output_size)
-                        for index in indexes
-                    ]
-                elif fault_type == MULTIPLE_FEATURE_MAPS_UNCATEGORIZED:
-                    indexes = np.random.choice(max_linear_index, size=cardinality, replace=False)
-                    return [
-                        np.unravel_index(index, shape=output_size)
-                        for index in indexes
-                    ]
-
+                fault_type = self.__random(*self.__unpack_table(spatial_model[str(cardinality)]["FF"]))
+                self.__debugspatial_model = int(fault_type)
+                patterns = spatial_model[str(cardinality)]["PF"][fault_type]
+                fault_type = int(fault_type)
+                if len(patterns) == 2 and "MAX" in patterns and "RANDOM" in patterns:
+                    return random_pattern(fault_type, output_size, cardinality)
+                revised_patterns = patterns.copy()
+                revised_patterns.pop("MAX", None)
+                pattern = self.__random(*self.__unpack_table(revised_patterns))
+                if pattern == "RANDOM":
+                    return random_pattern(fault_type, output_size, cardinality)
+                else:
+                    pattern = eval(pattern)
+                    if fault_type == SAME_FEATURE_MAP_SAME_ROW:
+                        assert pattern[-1] <= output_size[2] * output_size[3]
+                        np.random.randint(0, output_size[1])
+                        random_index = np.random.randint(0, output_size[2] * output_size[3] - pattern[-1])
+                        indexes = [
+                            random_index + offset
+                            for offset in pattern
+                        ]
+                        return [
+                            np.unravel_index(index, shape=output_size)
+                            for index in indexes
+                        ]
+                    elif fault_type == SAME_FEATURE_MAP_SAME_COLUMN:
+                        assert pattern[-1] <= output_size[3]
+                        np.random.randint(0, output_size[1])
+                        random_index = np.random.randint(0, output_size[2] * output_size[3] - pattern[-1] * output_size[3])
+                        indexes = [
+                            random_index + offset * output_size[3]
+                            for offset in pattern
+                        ]
+                        return [
+                            np.unravel_index(index, shape=output_size)
+                            for index in indexes
+                        ]
+                    elif fault_type == SAME_FEATURE_MAP_BLOCK:
+                        assert pattern[-1] * 16 <= output_size[2] * output_size[3]
+                        np.random.randint(0, output_size[1])
+                        random_index = np.random.randint(0, output_size[2] * output_size[3] - pattern[-1] * 16)
+                        indexes = [
+                            random_index + offset * output_size[3]
+                            for offset in pattern
+                        ]
+                        return [
+                            np.unravel_index(index, shape=output_size)
+                            for index in indexes
+                        ]
+                    elif fault_type == SAME_FEATURE_MAP_RANDOM:
+                        random_feature_map = np.random.randint(0, output_size[1])
+                        indexes = np.random.choice(output_size[2] * output_size[3], replace=False, size=cardinality)
+                        return [
+                            np.unravel_index(index + random_feature_map * output_size[2] * output_size[3],
+                                             shape=output_size)
+                            for index in indexes
+                        ]
+                    elif fault_type == MULTIPLE_FEATURE_MAPS_BULLET_WAKE:
+                        if pattern[-1] >= output_size[1]:
+                            new_card = 0
+                            for elem in pattern:
+                                if elem < output_size[1]:
+                                    new_card += 1
+                            pattern = pattern[:new_card]
+                            self.__debugcardinality = new_card
+                        starting_feature_map_index = np.random.randint(0, output_size[1] - pattern[-1])
+                        random_index = np.random.randint(0, output_size[2] * output_size[3])
+                        indexes = [
+                            random_index + (starting_feature_map_index + offset) * output_size[2] * output_size[3]
+                            for offset in pattern
+                        ]
+                        return [
+                            np.unravel_index(index, shape=output_size)
+                            for index in indexes
+                        ]
+                    elif fault_type == MULTIPLE_FEATURE_MAPS_BLOCK:
+                        if max_linear_index < 16 * pattern[-1]:
+                            new_card = 0
+                            for elem in pattern:
+                                if max_linear_index > elem * 16:
+                                    new_card += 1
+                            pattern = pattern[:new_card]
+                            self.__debugcardinality = new_card
+                        random_index = np.random.randint(0, max_linear_index - 16 * pattern[-1])
+                        indexes = [
+                            random_index + 16 * offset
+                            for offset in pattern
+                        ]
+                        return [
+                            np.unravel_index(index, shape=output_size)
+                            for index in indexes
+                        ]
+                    elif (
+                            fault_type == MULTIPLE_FEATURE_MAPS_SHATTER_GLASS or
+                            fault_type == MULTIPLE_FEATURE_MAPS_QUASI_SHATTER_GLASS
+                    ):
+                        if pattern[-1][0] >= output_size[1]:
+                            new_card = 0
+                            for elem in pattern:
+                                if elem[0] < output_size[1]:
+                                    new_card += 1
+                            pattern = pattern[:new_card]
+                        assert pattern[-1][0] < output_size[1]
+                        min_x = 0
+                        max_x = 0
+                        for feature in pattern:
+                            if feature[1][0] < min_x:
+                                min_x = feature[1][0]
+                            if feature[1][-1] > max_x:
+                                max_x = feature[1][-1]
+                        random_feature_map = np.random.randint(0, output_size[1] - pattern[-1][0])
+                        random_index = np.random.randint(min_x + 1, output_size[2] * output_size[3] - max_x)
+                        indexes = []
+                        for feature_pattern in pattern:
+                            for offset in feature_pattern[1]:
+                                indexes.append(
+                                    random_index + offset + (random_feature_map + feature_pattern[0]) * output_size[2] *
+                                    output_size[3])
+                        return [
+                            np.unravel_index(index, shape=output_size)
+                            for index in indexes
+                        ]
+                    elif fault_type == MULTIPLE_FEATURE_MAPS_UNCATEGORIZED:
+                        indexes = np.random.choice(max_linear_index, size=cardinality, replace=False)
+                        return [
+                            np.unravel_index(index, shape=output_size)
+                            for index in indexes
+                        ]
