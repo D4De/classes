@@ -170,7 +170,9 @@ MULTIPLE_FEATURE_MAPS_SHATTER_GLASS = 6
 MULTIPLE_FEATURE_MAPS_QUASI_SHATTER_GLASS = 7
 MULTIPLE_FEATURE_MAPS_UNCATEGORIZED = 8
 MULTIPLE_FEATURE_SKIP_4 = 9
-MULTIPLE_FEATURE_MAP_SINGLE_BLOCK = 10
+CHANNEL_ALIGNED_BLOCKS = 10
+TENSOR_ALIGNED_SINGLE_BLOCK = 11
+
 
 BLOCK_SIZE = 16
 
@@ -586,7 +588,7 @@ class InjectionSitesGenerator(object):
                     np.unravel_index(index, shape=output_size)
                     for index in raveled_offsets if index < max_linear_index
                 ]
-            elif fault_type == MULTIPLE_FEATURE_MAP_SINGLE_BLOCK:
+            elif fault_type == CHANNEL_ALIGNED_BLOCKS:
                 # Difference of the indices between the first faulty channel and the last faulty channel (capped to the length of output tensor)
                 max_chan_offset = int(patterns["MAX"])
                 max_chan_offset = min(max_chan_offset, output_size[1])
@@ -790,27 +792,31 @@ class InjectionSitesGenerator(object):
                             for index in indexes
                         ]
                     elif fault_type == MULTIPLE_FEATURE_SKIP_4 or fault_type == MULTIPLE_FEATURE_MAPS_SHATTER_GLASS:
-                        max_chan_offset = max(channel_offset[0] for channel_offset, feat_map_offsets in pattern)
+                        print(pattern)
+                        print(output_size)
+                        max_chan_offset = max(channel_offset for channel_offset, feat_map_offsets in pattern)
                         max_feat_map_offset = max(feat_map_offsets[-1] for channel_offset, feat_map_offsets in pattern)
                         # min_feat_map_offset must not be more than zero, by construction
                         min_feat_map_offset = min(feat_map_offsets[0] for channel_offset, feat_map_offsets in pattern)
                         delta_feat_map_offset = max_feat_map_offset - min_feat_map_offset  
                         # Check the applicability of the pattern (enough channels and enough offset)
+                        feature_map_size = output_size[2] * output_size[3]
                         assert max_chan_offset <= output_size[1]
                         assert delta_feat_map_offset <= output_size[2] * output_size[3]
                         # Fit the errors keeping in mind possible negative values values then they should fit
-                        random_start_index = np.random.randint(0, output_size[2] * output_size[3] - delta_feat_map_offset) - min_feat_map_offset
+                        random_start_index = np.random.randint(0, feature_map_size - delta_feat_map_offset) - min_feat_map_offset
                         # Select the base channel
                         random_channel = np.random.randint(0, output_size[1] - max_chan_offset)
                         indexes = [
-                            (random_start_channel + channel_offset) * feature_map_size + random_start_index + feat_map_offset
+                            (random_channel + channel_offset) * feature_map_size + random_start_index + feat_map_offset
                             for channel_offset, feat_map_offsets in pattern for feat_map_offset in feat_map_offsets
                         ]
                         return [
                             np.unravel_index(index, shape=output_size)
                             for index in indexes
                         ]
-                    elif fault_type == MULTIPLE_FEATURE_MAP_SINGLE_BLOCK:
+                    elif fault_type == CHANNEL_ALIGNED_BLOCKS:
+                        print(pattern)
                         align, spatial_pattern = pattern
                         max_chan_offset = max(channel_offset for channel_offset, feat_map_offsets in spatial_pattern)
                         feature_map_size = output_size[2] * output_size[3]
@@ -821,8 +827,8 @@ class InjectionSitesGenerator(object):
                         random_start_index = random_block * align
                         random_channel = np.random.randint(0, output_size[1] - max_chan_offset)
                         indexes = [
-                            (random_start_channel + channel_offset) * feature_map_size + random_start_index + feat_map_offset
-                            for channel_offset, feat_map_offsets in pattern for feat_map_offset in feat_map_offsets
+                            (random_channel + channel_offset) * feature_map_size + random_start_index + feat_map_offset
+                            for channel_offset, feat_map_offsets in spatial_pattern for feat_map_offset in feat_map_offsets
                             if 0 < random_start_index + feat_map_offset < feature_map_size 
                         ]
                         return [
@@ -834,10 +840,11 @@ class InjectionSitesGenerator(object):
                         assert max_chan_offset <= output_size[1]
 
                         random_start_channel = np.random.randint(0, output_size[1] - max_chan_offset)
-                        random_position = np.random.randint(0, output_size[2] * output_size[3])
+                        feature_map_size = output_size[2] * output_size[3]
+                        random_position = np.random.randint(0, feature_map_size)
 
                         indexes = [
-                            (random_start_channel + offset) * feature_map_size + random_start_index
+                            (random_start_channel + offset) * feature_map_size + random_position
                             for offset in pattern
                         ]
                         return [
