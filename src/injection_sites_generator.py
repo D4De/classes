@@ -178,12 +178,12 @@ BLOCK_SIZE = 16
 
 
 class InjectionSitesGenerator(object):
-    def __init__(self, injectable_sites, mode):
+    def __init__(self, injectable_sites, mode, models_folder='models'):
         self.__injectable_sites = injectable_sites
-        self.__cardinalities = self.__load_cardinalities()
-        self.__corrupted_values_domain = self.__load_corrupted_values_domain(mode)
-        self.__spatial_models = self.__load_spatial_models()
-        self.__warp_spatial_models = self.__load_warp_spatial_models()
+        self.__cardinalities = self.__load_cardinalities(models_folder)
+        self.__corrupted_values_domain = self.__load_corrupted_values_domain(mode, models_folder)
+        self.__spatial_models = self.__load_spatial_models(models_folder)
+        self.__warp_spatial_models = self.__load_warp_spatial_models(models_folder)
         self.__debugcardinality = -1
 
     def generate_random_injection_sites(self, size):
@@ -230,7 +230,7 @@ class InjectionSitesGenerator(object):
         temp_names = [model.get_model_name() for model in models]
         return temp_names
 
-    def __load_cardinalities(self):
+    def __load_cardinalities(self, models_folder):
         """
         Loads the cardinalities for each model.
         It creates a dictionary for each model, containing
@@ -248,8 +248,8 @@ class InjectionSitesGenerator(object):
             model_prefix = model_operator_name[:separator], model_operator_name[separator + 1:]
             experiment_name = model_prefix[1] + "_" + model_prefix[0]
             base_path = os.path.dirname(os.path.realpath(__file__))
-            model_cardinalities_path = base_path + "/models/{}/{}_anomalies_count.json".format(model_operator_name,
-                                                                                               experiment_name)
+            model_cardinalities_path = base_path + f"/{models_folder}/{model_operator_name}/{experiment_name}" \
+                                                   f"_anomalies_count.json "
             # Open the cardinalities file path and load it as a json file.
             with open(model_cardinalities_path, "r") as cardinalities_json:
                 model_cardinalities = json.load(cardinalities_json)
@@ -272,7 +272,7 @@ class InjectionSitesGenerator(object):
                 cardinalities[operator_names_table[model_operator_name]][int(cardinality)] += probabilities_left
         return cardinalities
 
-    def __load_corrupted_values_domain(self, mode):
+    def __load_corrupted_values_domain(self, mode, models_folder):
         """
         Loads the corrupted values domain for each model.
         It creates a dictionary for each model, containing
@@ -307,7 +307,7 @@ class InjectionSitesGenerator(object):
         for model_operator_name in self.__get_models():
             # The file is simply named as "value_analysis" and is common to each model.
             base_path = os.path.dirname(os.path.realpath(__file__))
-            value_path = base_path + "/models/{}/value_analysis.txt".format(model_operator_name)
+            value_path = base_path + f"/{models_folder}/{model_operator_name}/value_analysis.txt"
             with open(value_path, "r") as value_analysis_file:
                 # Read the files as text lines.
                 model_corrupted_values_domain = OrderedDict()
@@ -325,24 +325,24 @@ class InjectionSitesGenerator(object):
                 corrupted_values_domain[operator_names_table[model_operator_name]] = model_corrupted_values_domain
         return corrupted_values_domain
 
-    def __load_spatial_models(self):
+    def __load_spatial_models(self, models_folder):
         spatial_models = {}
         for model_operator_name in self.__get_models():
             base_path = os.path.dirname(os.path.realpath(__file__))
-            spatial_model_path = base_path + "/models/{}/{}_spatial_model.json".format(model_operator_name,
-                                                                                       model_operator_name)
+            spatial_model_path = base_path + f"/{models_folder}/{model_operator_name}/{model_operator_name}" \
+                                             f"_spatial_model.json"
             with open(spatial_model_path, "r") as spatial_model_json:
                 spatial_model = json.load(spatial_model_json)
                 if operator_names_table[model_operator_name] not in spatial_models:
                     spatial_models[operator_names_table[model_operator_name]] = spatial_model
         return spatial_models
 
-    def __load_warp_spatial_models(self):
+    def __load_warp_spatial_models(self, models_folder):
         spatial_models = {}
         for model_operator_name in self.__get_models():
             base_path = os.path.dirname(os.path.realpath(__file__))
-            spatial_model_path = base_path + "/models/{}/{}_warp_spatial_model.json".format(model_operator_name,
-                                                                                            model_operator_name)
+            spatial_model_path = base_path + f"/{models_folder}/{model_operator_name}/{model_operator_name}" \
+                                             f"_warp_spatial_model.json"
             with open(spatial_model_path, "r") as spatial_model_json:
                 spatial_model = json.load(spatial_model_json)
                 if operator_names_table[model_operator_name] not in spatial_models:

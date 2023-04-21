@@ -4,13 +4,13 @@ from keras import datasets, layers, models, losses
 from keras import backend as K
 
 import os
-import sys 
+import sys
 
 CLASSES_MODULE_PATH = "../../../"
 WEIGHT_FILE_PATH = "../"
 
 # appending a path
-sys.path.append(CLASSES_MODULE_PATH) #CHANGE THIS LINE
+sys.path.append(CLASSES_MODULE_PATH)  # CHANGE THIS LINE
 
 from src.injection_sites_generator import *
 
@@ -27,14 +27,16 @@ from src.injection_sites_generator import *
 #		3. selected layer index: the index referring to the layer we selected for the injection
 #		4. operator type: a value from the OperatorType enum that defines the type of the layer we are injecting
 #		5. shape: the output shape of the layer as a string in the following format: (None, channels, widht, height)
+#       6. models_path: the folder in src/ where we placed the error models, it can be specified if the user does not
+#          want to use the defaults one.
 #
 # The function will return the corrupted output of the model
 
-def generate_injection_sites(sites_count, layer_type, layer_name, size, models_mode=''):
+def generate_injection_sites(sites_count, layer_type, layer_name, size, models_path, models_mode=''):
     injection_site = InjectableSite(layer_type, layer_name, size)
 
     try:
-        injection_sites, cardinality, pattern = InjectionSitesGenerator([injection_site], models_mode) \
+        injection_sites, cardinality, pattern = InjectionSitesGenerator([injection_site], models_mode, models_path) \
             .generate_random_injection_sites(sites_count)
     except:
         return []
@@ -78,14 +80,15 @@ def load_data():
 
     return x_train, y_train, x_val, y_val
 
-def inject_layer(model, img, selected_layer_idx, layer_type, layer_output_shape_cf):
+
+def inject_layer(model, img, selected_layer_idx, layer_type, layer_output_shape_cf, models_path='models'):
     get_selected_layer_output = K.function([model.layers[0].input], [model.layers[selected_layer_idx].output])
     get_model_output = K.function([model.layers[selected_layer_idx + 1].input], [model.layers[-1].output])
 
     output_selected_layer = get_selected_layer_output([np.expand_dims(img, 0)])[0]
 
     injection_site, cardinality, pattern = generate_injection_sites(1, layer_type, '',
-                                                                    layer_output_shape_cf)
+                                                                    layer_output_shape_cf, models_path)
 
     if len(injection_site) > 0:
         for idx, value in injection_site[0].get_indexes_values():
@@ -105,13 +108,14 @@ NUM = 42
 SELECTED_LAYER_IDX = 3
 
 x_train, y_train, x_val, y_val = load_data()
-path_weights = os.path.join(WEIGHT_FILE_PATH,'weights.h5')
+path_weights = os.path.join(WEIGHT_FILE_PATH, 'weights.h5')
 print(f"Load weights from => {path_weights}")
 model = build_model(x_train[0].shape, saved_weights=path_weights)
 errors = 0
 
 for _ in range(NUM_INJECTIONS):
-    res = inject_layer(model, x_val[NUM], SELECTED_LAYER_IDX, OperatorType['Conv2D'], '(None, 16, 27, 27)')
+    res = inject_layer(model, x_val[NUM], SELECTED_LAYER_IDX, OperatorType['Conv2D'], '(None, 16, 27, 27)',
+                       models_path='models')
     if np.argmax(res) != y_val[NUM]:
         errors += 1
 
