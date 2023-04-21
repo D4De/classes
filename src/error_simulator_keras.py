@@ -2,13 +2,15 @@ import tensorflow as tf
 import numpy as np
 from src.injection_sites_generator import InjectableSite, InjectionSitesGenerator
 
+
 def create_injection_sites_layer_simulator(num_requested_injection_sites, layer_type, layer_output_shape_cf,
-                           layer_output_shape_cl):
+                                           layer_output_shape_cl, models_folder):
     def __generate_injection_sites(sites_count, layer_type, size, models_mode=''):
 
         injection_site = InjectableSite(layer_type, '', size)
         try:
-            injection_sites, cardinality, pattern = InjectionSitesGenerator([injection_site], models_mode) \
+            injection_sites, cardinality, pattern = InjectionSitesGenerator([injection_site],
+                                                                            models_mode, models_folder)\
                 .generate_random_injection_sites(sites_count)
         except:
             return []
@@ -37,6 +39,7 @@ def create_injection_sites_layer_simulator(num_requested_injection_sites, layer_
 
     return available_injection_sites, masks
 
+
 class ErrorSimulator(tf.keras.layers.Layer):
 
     def __init__(self, available_injection_sites, masks, num_inj_sites, **kwargs):
@@ -61,4 +64,3 @@ class ErrorSimulator(tf.keras.layers.Layer):
         random_tensor = tf.gather(self.__available_injection_sites, random_index)
         random_mask = tf.gather(self.__masks, random_index)
         return [inputs * random_mask + random_tensor, random_tensor, random_mask]
-

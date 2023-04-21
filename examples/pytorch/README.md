@@ -4,9 +4,10 @@ The error simulator for PyTorch has been developed as a custom layer that can
 be used in a model as any other layer.
 ## How to use
 The user has to place the simulator after the targeted layer, passing the following
-two parameters
+three parameters
 1. layer_type: defines the type of layer we are injecting, it must be a element from the [OperatorType](../../src/operators.py) enum
 2. size: the output shape of the target layer, must be a string with the following format '(None, Channels, Width, Height)'
+3. models_folder: a string that identifies the folder where we placed the error models.
 
 As an example of this process let's take this simple model
 ```python
@@ -33,7 +34,7 @@ class ExampleModelSimulator(nn.Module):
      def __init__(self, n_classes, layer_type, output_shape):
         super(ExampleModelSimulator, self).__init__()
         self.conv = nn.Conv2d(in_channels=..., out_channels=..., kernel_size=..., stride=...)
-        self.simulator = Simulator(layer_type, output_shape) # We add the simulator to the model
+        self.simulator = Simulator(layer_type, output_shape, models_folder) # We add the simulator to the model
         self.pool = nn.AvgPool2d(kernel_size=...)
         self.tanh = nn.Tanh()
         self.linear = nn.Linear(in_features=..., out_features=n_classes)

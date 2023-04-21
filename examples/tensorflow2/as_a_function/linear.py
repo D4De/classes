@@ -113,6 +113,7 @@ print(f"Load weights from => {path_weights}")
 model = build_model(x_train[0].shape, saved_weights=path_weights)
 errors = 0
 
+
 for _ in range(NUM_INJECTIONS):
     res = inject_layer(model, x_val[NUM], SELECTED_LAYER_IDX, OperatorType['Conv2D'], '(None, 16, 27, 27)',
                        models_path='models')

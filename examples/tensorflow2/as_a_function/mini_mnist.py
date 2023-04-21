@@ -31,11 +31,11 @@ from src.injection_sites_generator import *
 #
 # The function will return the corrupted output of the model
 
-def generate_injection_sites(sites_count, layer_type, layer_name, size, models_mode=''):
+def generate_injection_sites(sites_count, layer_type, layer_name, size, models_path, models_mode=''):
     injection_site = InjectableSite(layer_type, layer_name, size)
 
     
-    injection_sites, cardinality, pattern = InjectionSitesGenerator([injection_site], models_mode) \
+    injection_sites, cardinality, pattern = InjectionSitesGenerator([injection_site], models_mode, models_path) \
             .generate_random_injection_sites(sites_count)
 
 
@@ -67,14 +67,14 @@ def load_data():
     return train_images / 255.0, test_images / 255.0, train_labels, test_labels
 
 
-def inject_layer(model, img, selected_layer_idx, layer_type, layer_output_shape_cf):
+def inject_layer(model, img, selected_layer_idx, layer_type, layer_output_shape_cf, models_path):
     get_selected_layer_output = K.function([model.layers[0].input], [model.layers[selected_layer_idx].output])
     get_model_output = K.function([model.layers[selected_layer_idx + 1].input], [model.layers[-1].output])
 
     output_selected_layer = get_selected_layer_output([np.expand_dims(img, 0)])[0]
 
     injection_site, cardinality, pattern = generate_injection_sites(1, layer_type, '',
-                                                                    layer_output_shape_cf)
+                                                                    layer_output_shape_cf, models_path)
     print(f"{cardinality=}")
     print(f"{pattern=}")
     if len(injection_site) > 0:
@@ -106,7 +106,8 @@ model = build_model(x_train[0].shape, saved_weights=path_weights)
 errors = 0
 
 for _ in range(NUM_INJECTIONS):
-    res = inject_layer(model, x_train[NUM], SELECTED_LAYER_IDX, OperatorType['Conv2D'], '(None, 32, 32, 3)')
+    res = inject_layer(model, x_train[NUM], SELECTED_LAYER_IDX, OperatorType['Conv2D'], '(None, 32, 32, 3)',
+                       models_path='models')
     if np.argmax(res) != lab_train[NUM]:
         errors += 1
 
