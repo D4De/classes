@@ -75,13 +75,12 @@ def inject_layer(model, img, selected_layer_idx, layer_type, layer_output_shape_
 
     injection_site, cardinality, pattern = generate_injection_sites(1, layer_type, '',
                                                                     layer_output_shape_cf, models_path)
-    print(f"{cardinality=}")
-    print(f"{pattern=}")
+    
     if len(injection_site) > 0:
         print(f"Injected from: {next(injection_site[0].get_indexes_values())[0]}")
         for idx, value in injection_site[0].get_indexes_values():
             # Reorder idx if format is NHWC
-            channel_last_idx = (idx[0], idx[1], idx[2], idx[3])
+            channel_last_idx = (idx[0], idx[2], idx[3], idx[1])
             if value.value_type == '[-1,1]':
                 output_selected_layer[channel_last_idx] += value.raw_value
             else:
@@ -92,7 +91,7 @@ def inject_layer(model, img, selected_layer_idx, layer_type, layer_output_shape_
     return model_output
 
 
-NUM_INJECTIONS = 400
+NUM_INJECTIONS = 10
 NUM = 40
 SELECTED_LAYER_IDX = 0
 
@@ -106,8 +105,8 @@ model = build_model(x_train[0].shape, saved_weights=path_weights)
 errors = 0
 
 for _ in range(NUM_INJECTIONS):
-    res = inject_layer(model, x_train[NUM], SELECTED_LAYER_IDX, OperatorType['Conv2D'], '(None, 32, 32, 3)',
-                       models_path='models')
+    res = inject_layer(model, x_train[NUM], SELECTED_LAYER_IDX, OperatorType.Conv2D3x3, '(None, 3, 32, 32)',
+                       models_path='src/models_warp')
     if np.argmax(res) != lab_train[NUM]:
         errors += 1
 
