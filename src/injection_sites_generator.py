@@ -1,3 +1,4 @@
+import math
 import os
 import json
 from collections import OrderedDict
@@ -182,9 +183,14 @@ MULTIPLE_FEATURE_MAPS_BLOCK = 5
 MULTIPLE_FEATURE_MAPS_SHATTER_GLASS = 6
 MULTIPLE_FEATURE_MAPS_QUASI_SHATTER_GLASS = 7
 MULTIPLE_FEATURE_MAPS_UNCATEGORIZED = 8
-SKIP_4 = 9
-CHANNEL_ALIGNED_BLOCKS = 10
-TENSOR_ALIGNED_SINGLE_BLOCK = 11
+SKIP_4 = 1001
+CHANNEL_ALIGNED_BLOCKS = 1002
+TENSOR_ALIGNED_SINGLE_BLOCK = 1003
+SINGLE_BLOCK = 1004
+MULTI_CHANNEL_MULTI_BLOCK = 1005
+SHATTERED_CHANNEL = 1006
+QUASI_SHATTERED_CHANNEL = 1007
+SINGLE_CHANNEL_ALTERNATED_BLOCKS = 1008
 
 
 BLOCK_SIZE = 16
@@ -567,7 +573,7 @@ class InjectionSitesGenerator(object):
                     np.unravel_index(index, shape=output_size)
                     for index in indexes
                 ]
-            elif fault_type == MULTIPLE_FEATURE_MAPS_SHATTER_GLASS:
+            elif fault_type == MULTIPLE_FEATURE_MAPS_SHATTER_GLASS or fault_type == SHATTERED_CHANNEL:
                 logger.info("Spatial Type: MULTIPLE_FEATURE_MAPS_SHATTER_GLASS. Pattern: Random")
                 max_offsets = [
                     int(patterns["MAX"][0]),
@@ -595,7 +601,7 @@ class InjectionSitesGenerator(object):
                     np.unravel_index(index, shape=output_size)
                     for index in indexes
                 ]
-            elif fault_type == MULTIPLE_FEATURE_MAPS_QUASI_SHATTER_GLASS:
+            elif fault_type == MULTIPLE_FEATURE_MAPS_QUASI_SHATTER_GLASS or fault_type == QUASI_SHATTERED_CHANNEL:
                 logger.info("Spatial Type: MULTIPLE_FEATURE_MAPS_QUASI_SHATTER_GLASS. Pattern: Random")
                 max_offsets = int(patterns["MAX"])
                 feature_map_indexes = np.random.choice(output_size[1], replace=False, size=max_offsets)
@@ -735,7 +741,83 @@ class InjectionSitesGenerator(object):
                     np.unravel_index(index, shape=output_size)
                     for index in raveled_offsets if index < max_linear_index
                 ]
-            else:
+            elif fault_type == SINGLE_BLOCK:
+                logger.info("Spatial Type: SINGLE_BLOCK. Pattern: Random")
+                # Block alignment
+                if 9 <= cardinality <= 16:
+                    align = 16
+                elif 17 <= cardinality <= 32:
+                    align = 32
+                else:
+                    align = 64
+                # Select block where to inject in all tensors
+                random_start_index = np.random.randint(0, max_linear_index - cardinality)
+                # Calculate size (== align, except for remaineder)
+                block_size = min(align, max_linear_index - random_start_index)
+                # Number of available slots where to inject faults
+                n_slots = block_size
+                # Select faulty slots
+                random_slots = np.random.choice(n_slots, replace=False, size=min(n_slots, cardinality))
+                # Map slot number to raveled index
+                raveled_offsets = [
+                    random_start_index + slot
+                    for slot in random_slots
+                ]
+                return [
+                    np.unravel_index(index, shape=output_size)
+                    for index in raveled_offsets if index < max_linear_index
+                ]
+            elif fault_type == MULTI_CHANNEL_MULTI_BLOCK:
+                logger.info("Spatial Type: MULTI_CHANNEL_MULTI_BLOCK. Pattern: Random")     
+                feature_map_size = output_size[2] * output_size[3]
+                max_corr_channels = int(patterns["MAX"][0])
+                max_chan_offset = int(patterns["MAX"][1])
+                min_idx = int(patterns["MAX"][2])
+                max_idx = max(int(patterns["MAX"][3]), feature_map_size)
+
+                max_feature_maps = min(output_size[1], max_corr_channels, max_chan_offset)
+                max_faults_per_channel = min(max_idx - min_idx, feature_map_size)
+                min_feature_maps = min(max_feature_maps, int(math.ceil(cardinality // max_faults_per_channel)))
+                allowed_block_sizes = [i for i in [16,32,64] if i <= min(feature_map_size, max_idx)]
+                if len(allowed_block_sizes):
+                    allowed_block_sizes = [max_idx]
+                random_block_size = np.random.choice(allowed_block_sizes, size=1, replace=False)
+
+                random_number_of_channels = np.randint(min_feature_maps, max_feature_maps)
+                random_start_feature_map = np.randint(0, max(0, output_size[1] - max_chan_offset))
+                random_chan_offsets = np.random.choice(min(output_size[1], max_chan_offset), size=random_number_of_channels)
+                random_channels = [random_start_feature_map + chan for chan in random_chan_offsets]
+                max_full_block_errors = max(len(random_channels), cardinality // random_block_size)
+                full_block_channels = list(set(np.random.choice(random_channels, size=max_full_block_errors, replace=True)))
+
+                block_error_count = len(full_block_channels) * random_block_size
+                block_slots = [(chan, offset) for chan in full_block_channels for offset in range(0, random_block_size)]
+                injectable_slots = [(chan, offset) for chan in random_channels for offset in range(-min_idx, max_idx) if chan not in full_block_channels or offset < 0 or offset > random_block_size]
+                remaining_errors = cardinality - block_error_count
+                other_errors = list(set(np.random.choice(remaining_errors, size=min(len(injectable_slots,remaining_errors)), replace=False)))
+                all_errors = block_slots + other_errors
+                min_zero_index = min(-min_idx, feature_map_size)
+                max_zero_index = max(0, feature_map_size - max_idx)
+                
+                if min_zero_index >= max_zero_index:
+                    random_zero_index = 0
+                else:
+                    random_zero_index = np.randint(min_zero_index, max_zero_index)
+                
+                raveled_offsets = [
+                    chan # Calculate the channel of the slot
+                    * feature_map_size 
+                    + offset + random_zero_index
+
+                    for chan, offset in all_errors
+                    if  0 <= chan * feature_map_size + offset + random_zero_index < max_linear_index
+                ]
+                return [
+                    np.unravel_index(index, shape=output_size)
+                    for index in raveled_offsets if index < max_linear_index
+                ]
+
+            else:   
                 logger.info("Spatial Type: MULTIPLE_FEATURE_MAPS_UNCATEGORIZED. Pattern: Random")
                 indexes = np.random.choice(max_linear_index, size=cardinality, replace=False)
                 return [
@@ -874,9 +956,26 @@ class InjectionSitesGenerator(object):
                 elif (
                         fault_type == MULTIPLE_FEATURE_MAPS_SHATTER_GLASS or
                         fault_type == MULTIPLE_FEATURE_MAPS_QUASI_SHATTER_GLASS or
-                        fault_type == SKIP_4
+                        fault_type == SKIP_4 or 
+                        fault_type == SHATTERED_CHANNEL or
+                        fault_type == QUASI_SHATTERED_CHANNEL or
+                        fault_type == MULTI_CHANNEL_MULTI_BLOCK
                 ):
-                    logger.info(f"Spatial Type: MULTIPLE_FEATURE_MAPS_SHATTER_GLASS/SKIP_4. Pattern: {pattern}")                    
+                    
+                    if fault_type == MULTIPLE_FEATURE_MAPS_SHATTER_GLASS:
+                        pattern_name = "MULTIPLE_FEATURE_MAPS_SHATTER_GLASS"
+                    elif fault_type == MULTIPLE_FEATURE_MAPS_QUASI_SHATTER_GLASS:
+                        pattern_name = "MULTIPLE_FEATURE_MAPS_QUASI_SHATTER_GLASS"
+                    elif fault_type == SKIP_4:
+                        pattern_name = "SKIP_4"
+                    elif fault_type == SHATTERED_CHANNEL:
+                        pattern_name = "SHATTERED_CHANNEL"
+                    elif fault_type == QUASI_SHATTERED_CHANNEL:
+                        pattern_name = "QUASI_SHATTERED_CHANNEL"
+                    elif fault_type == MULTI_CHANNEL_MULTI_BLOCK:
+                        pattern_name = "MULTI_CHANNEL_MULTI_BLOCK"
+                        align, pattern = pattern
+                    logger.info(f"Spatial Type: {pattern_name}. Pattern: {pattern}")
                     max_chan_offset = max(channel_offset for channel_offset, feat_map_offsets in pattern)
                     max_feat_map_offset = max(feat_map_offsets[-1] for channel_offset, feat_map_offsets in pattern)
                     # min_feat_map_offset must not be more than zero, by construction
@@ -885,7 +984,7 @@ class InjectionSitesGenerator(object):
                     # Check the applicability of the pattern (enough channels and enough offset)
                     feature_map_size = output_size[2] * output_size[3]
                     assert max_chan_offset < output_size[1]
-                    assert delta_feat_map_offset <= output_size[2] * output_size[3]
+                    assert delta_feat_map_offset <= feature_map_size
                     # Fit the errors keeping in mind possible negative values values then they should fit
                     random_start_index = np.random.randint(0, feature_map_size - delta_feat_map_offset) - min_feat_map_offset
                     # Select the base channel
@@ -912,12 +1011,45 @@ class InjectionSitesGenerator(object):
                     indexes = [
                         (random_channel + channel_offset) * feature_map_size + random_start_index + feat_map_offset
                         for channel_offset, feat_map_offsets in spatial_pattern for feat_map_offset in feat_map_offsets
-                        if 0 < random_start_index + feat_map_offset < feature_map_size 
+                        if 0 <= random_start_index + feat_map_offset < feature_map_size 
                     ]
                     return [
                         np.unravel_index(index, shape=output_size)
                         for index in indexes
                     ]
+                elif fault_type == SINGLE_BLOCK:
+                    block_length, spatial_pattern = pattern
+                    last_block_index = spatial_pattern[-1]
+                    max_start_index = max_linear_index - max(block_length, last_block_index)
+                    random_start_index = np.random.randint(0, max_start_index)
+                    indexes = [
+                        random_start_index + idx for idx in spatial_pattern
+                    ]
+                    return [
+                        np.unravel_index(index, shape=output_size)
+                        for index in indexes
+                    ]
+                elif fault_type == SINGLE_CHANNEL_ALTERNATED_BLOCKS:
+                    logger.info(f"Spatial Type: SINGLE_CHANNEL_ALTERNATED_BLOCKS. Pattern: {pattern}")
+                    align, spatial_pattern = pattern
+                    last_index = spatial_pattern[-1]
+                    feature_map_size = output_size[2] * output_size[3]
+                    max_block_start = (feature_map_size - last_index) // align
+
+                    assert max_block_start > 0
+                    # Round by excess align (even incomplete blocks can be hit by a block error)
+                    random_block = np.random.randint(0, max_block_start)
+                    random_start_index = random_block * align
+                    random_channel = np.random.randint(0, output_size[1])
+                    indexes = [
+                        random_channel * feature_map_size + random_start_index + feat_map_offset
+                        for feat_map_offset in spatial_pattern
+                        if 0 <= random_start_index + feat_map_offset < feature_map_size 
+                    ]
+                    return [
+                        np.unravel_index(index, shape=output_size)
+                        for index in indexes
+                    ]                    
                 elif fault_type == MULTIPLE_FEATURE_MAPS_UNCATEGORIZED:
                     logger.info(f"Spatial Type: MULTIPLE_FEATURE_MAPS_UNCATEGORIZED. Pattern: {pattern}")
                     indexes = np.random.choice(max_linear_index, size=cardinality, replace=False)
