@@ -92,12 +92,14 @@ NUM = 42
 layer_type = OperatorType['Conv2D']
 layer_output_shape_cf = '(None, 16, 27, 27)'
 layer_output_shape_cl = '(None, 27, 27, 16)'
+MODELS_FOLDER = '/models'
 
 num_requested_injection_sites = NUM_INJECTIONS * 5
 
 available_injection_sites, masks = create_injection_sites_layer_simulator(num_requested_injection_sites,
                                                                           layer_type,
-                                                                          layer_output_shape_cf, layer_output_shape_cl)
+                                                                          layer_output_shape_cf, layer_output_shape_cl,
+                                                                          models_folder=MODELS_FOLDER)
 
 x_train, y_train, x_val, y_val = load_data()
 path_weights = os.path.join(WEIGHT_FILE_PATH,'weights.h5')

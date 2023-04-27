@@ -15,12 +15,13 @@ the process is straightforward and the steps needed are the following
     - selected_layer_idx: index of the target layer 
     - layer_type: an element of the enum [OperatorType](../../../src/operators.py) defining what kind of layer we are targeting
     - layer_output_shape_cf: a string of format '(None, Channels, Width, Height)' defining the output shape of the target layer
-
+    - models_folder: a string that identifies the folder where we placed the error models.
+ 
 For example if we want to target the second convolutional layer whose index is 3 we will do the following
 ```python
 selected_layer_idx = 3
 for _ in range(NUM_SIMULATION):
-    res = inject_layer(model, image, selected_layer_idx, OperatorType['Conv2D'], '(None, Channels, Width, Height)')
+    res = inject_layer(model, image, selected_layer_idx, OperatorType['Conv2D'], '(None, Channels, Width, Height)', '/models')
 ```
 
 ### U-Net

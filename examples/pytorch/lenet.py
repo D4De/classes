@@ -11,7 +11,7 @@ import sys
 
 CLASSES_MODULE_PATH = "../../"
 WEIGHT_FILE_PATH = "./"
-
+MODELS_FOLDER = '/models'
 # appending a path
 sys.path.append(CLASSES_MODULE_PATH) #CHANGE THIS LINE
 
@@ -22,9 +22,10 @@ from src.injection_sites_generator import OperatorType
 This is a simple example on how to use the error simulator with PyTorch. The simulator has been developed as a custom
 layer that can be added to any model. From a standard description of a LeNet5 model defined in class LeNet5 we 
 modify the model by inserting our simulator as seen in class LeNet5Simulator at line 77. 
-The two parameters that we pass to the simulator are 
+The three parameters that we pass to the simulator are 
 1. operator_type: an element of the OperatorType enum that defines what kind of layer we are targeting
 2. output shape of the layer as a string of format (None, channels, width, height)
+3. models_folder: the path to the models folder, it can be changed to use different error models 
 
 At lines 141 - 143 we manually copy the weights from the pre trained model to the new modified model and then we can
 simply execute the inference obtaining the corrupted results of our simulation campaign
@@ -84,7 +85,7 @@ class LeNet5Simulator(nn.Module):
     def __init__(self, n_classes, operator_type, output_shape):
         super(LeNet5Simulator, self).__init__()
         self.conv1 = nn.Conv2d(in_channels=1, out_channels=6, kernel_size=5, stride=1)
-        self.simulator = Simulator(operator_type, output_shape)
+        self.simulator = Simulator(operator_type, output_shape, MODELS_FOLDER)
         self.tanh1 = nn.Tanh()
         self.pool1 = nn.AvgPool2d(kernel_size=2)
         self.conv2 = nn.Conv2d(in_channels=6, out_channels=16, kernel_size=5, stride=1)

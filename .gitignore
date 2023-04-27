@@ -3,3 +3,5 @@ src/__pycache__
 .idea
 examples/pytorch/mnist_data
 examples/pytorch/data/MNIST
+mnist
+load.py

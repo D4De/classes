@@ -11,6 +11,7 @@ The steps required to setup the simulator are the following
     - layer_type: an [OperatorType](../../../src/operators.py) element defining what kind of layer we are targeting
     - layer_output_shape_cf: a string defining the targeted layer output shape in the format (None, channels, width, height)
     - layer_output_shape_cl: a string defining the targeted layer output shape in the format (None, width, height, channels)
+    - models_folder: a string that identifies the folder where we placed the error models. 
 2. Define a new model that will be a copy of the one we are targeting with the addition of the simulator layer
 3. Instantiate the model and provide it the injection sites
 4. Copy the weights from the original model to the new one
@@ -48,11 +49,12 @@ layer_type = OperatorType['Conv2D']
 layer_output_shape_cf = '(None, channels, width, height)'
 layer_output_shape_cl = '(None, width, height, channels)'
 num_requested_injection_sites = NUM_INJECTIONS * 5
-
+MODELS_FOLDER = '/models'
 # We create the injection sites
 available_injection_sites, masks = create_injection_sites_layer_simulator(num_requested_injection_sites,
                                                                           layer_type,
-                                                                          layer_output_shape_cf, layer_output_shape_cl)
+                                                                          layer_output_shape_cf, layer_output_shape_cl,
+                                                                          MODELS_FOLDER)
 # We build both models
 model = keras.models.load_model('weights.h5')
 model_with_simulator = build_model_with_simulator(input_shape, available_injection_sites, masks,
