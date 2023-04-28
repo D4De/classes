@@ -1,7 +1,8 @@
 import tensorflow as tf
 import numpy as np
-from src.injection_sites_generator import InjectableSite, InjectionSitesGenerator
-
+from .injection_sites_generator import InjectableSite, InjectionSitesGenerator
+from enum import IntEnum
+import sys
 
 def create_injection_sites_layer_simulator(num_requested_injection_sites, layer_type, layer_output_shape_cf,
                                            layer_output_shape_cl, models_folder):
@@ -39,6 +40,9 @@ def create_injection_sites_layer_simulator(num_requested_injection_sites, layer_
 
     return available_injection_sites, masks
 
+class ErrorSimulatorMode(IntEnum):
+    disabled = 1,
+    enabled  = 2
 
 class ErrorSimulator(tf.keras.layers.Layer):
 
@@ -51,11 +55,45 @@ class ErrorSimulator(tf.keras.layers.Layer):
         self.__cardinalities = []
         self.__patterns = []
 
+        #Parameter to chose between enable/disable faults
+        self.mode = tf.Variable([[int(ErrorSimulatorMode.enabled)]],shape=tf.TensorShape((1,1)),trainable=False) 
+        
         for inj_site in available_injection_sites:
             self.__available_injection_sites.append(tf.convert_to_tensor(inj_site, dtype=tf.float32))
         for mask in masks:
             self.__masks.append(tf.convert_to_tensor(mask, dtype=tf.float32))
 
+    '''
+    Allow to enable or disable the Fault Layer
+    '''
+    def set_mode(self, mode:ErrorSimulatorMode):
+        self.mode.assign([[int(mode)]])
+
+    '''
+    Add Fault Mask to the Input to emulate faults
+    '''
+    def fault_injection(self,inputs):
+        random_index = tf.random.uniform(
+            shape=[1], minval=0,
+            maxval=self.__num_inj_sites, dtype=tf.int32, seed=22)
+
+        #print(f"Fault from {self.name}")
+        random_tensor = tf.gather(self.__available_injection_sites, random_index)
+        random_mask = tf.gather(self.__masks, random_index)
+
+        #return [inputs * random_mask + random_tensor, random_tensor, random_mask]
+        return inputs * random_mask + random_tensor
+    
+    def call(self, inputs):
+        #tf.print("MODE LAYER :", self.mode, tf.constant([[int(ErrorSimulatorMode.disabled)]]), output_stream=sys.stdout)
+        #TF operator to check which mode is active
+        #If Disabled => Return Vanilla output
+        #If Enabled  => Return Faulty  output
+        return tf.cond(self.mode == tf.constant([[int(ErrorSimulatorMode.disabled)]]),
+                       true_fn=lambda: inputs,
+                       false_fn=lambda: self.fault_injection(inputs))
+    '''
+    #OLD DEPRECATED CALL FUNCTION
     def call(self, inputs):
         random_index = tf.random.uniform(
             shape=[1], minval=0,
@@ -64,3 +102,4 @@ class ErrorSimulator(tf.keras.layers.Layer):
         random_tensor = tf.gather(self.__available_injection_sites, random_index)
         random_mask = tf.gather(self.__masks, random_index)
         return [inputs * random_mask + random_tensor, random_tensor, random_mask]
+    '''

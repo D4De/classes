@@ -10,7 +10,7 @@ import traceback
 import struct
 
 
-from src.operators import OperatorType
+from .operators import OperatorType
 
 import logging
 import logging.config
