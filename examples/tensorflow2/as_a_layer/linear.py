@@ -9,6 +9,7 @@ import sys
 
 CLASSES_MODULE_PATH = "../../../"
 WEIGHT_FILE_PATH = "../"
+MODELS_PATH = CLASSES_MODULE_PATH + "models"
 
 # appending a path
 sys.path.append(CLASSES_MODULE_PATH) #CHANGE THIS LINE
@@ -63,7 +64,7 @@ def build_model_with_simulator(input_shape, available_injection_sites, masks, nu
     conv2 = layers.Conv2D(filters=16, kernel_size=(5, 5), strides=(1, 1), activation='relu', padding="same",
                           name='conv2')(pool1)
     simulator = ErrorSimulator(available_injection_sites, masks, num_inj_sites)(conv2)
-    pool2 = layers.MaxPool2D(pool_size=(2, 2), strides=(1, 1), name='maxpool2')(simulator[0])
+    pool2 = layers.MaxPool2D(pool_size=(2, 2), strides=(1, 1), name='maxpool2')(simulator)
     conv3 = layers.Conv2D(filters=120, kernel_size=(5, 5), strides=(1, 1), activation='relu', padding="same",
                           name='conv3')(pool2)
     flatten = layers.Flatten(name='flatten')(conv3)
@@ -92,14 +93,13 @@ NUM = 42
 layer_type = OperatorType['Conv2D']
 layer_output_shape_cf = '(None, 16, 27, 27)'
 layer_output_shape_cl = '(None, 27, 27, 16)'
-MODELS_FOLDER = '/models'
 
 num_requested_injection_sites = NUM_INJECTIONS * 5
 
 available_injection_sites, masks = create_injection_sites_layer_simulator(num_requested_injection_sites,
                                                                           layer_type,
                                                                           layer_output_shape_cf, layer_output_shape_cl,
-                                                                          models_folder=MODELS_FOLDER)
+                                                                          models_folder=MODELS_PATH)
 
 x_train, y_train, x_val, y_val = load_data()
 path_weights = os.path.join(WEIGHT_FILE_PATH,'weights.h5')

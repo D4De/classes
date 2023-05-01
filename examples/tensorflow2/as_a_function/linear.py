@@ -8,6 +8,7 @@ import sys
 
 CLASSES_MODULE_PATH = "../../../"
 WEIGHT_FILE_PATH = "../"
+MODELS_PATH = CLASSES_MODULE_PATH + "models"
 
 # appending a path
 sys.path.append(CLASSES_MODULE_PATH)  # CHANGE THIS LINE
@@ -116,7 +117,7 @@ errors = 0
 
 for _ in range(NUM_INJECTIONS):
     res = inject_layer(model, x_val[NUM], SELECTED_LAYER_IDX, OperatorType['Conv2D'], '(None, 16, 27, 27)',
-                       models_path='models')
+                       models_path=MODELS_PATH)
     if np.argmax(res) != y_val[NUM]:
         errors += 1
 
