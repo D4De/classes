@@ -44,6 +44,58 @@ class ErrorSimulatorMode(IntEnum):
     disabled = 1,
     enabled  = 2
 
+'''
+Inject Different fault for each image inside a batch
+'''
+@tf.function
+def fault_injection_batch(inputs,__num_inj_sites,__available_injection_sites,__masks):
+    #Extract batch Size
+    shape       = tf.shape(inputs)
+    batch_size  = shape[0]
+
+    #Compute fault on first image
+    init = fault_injection(inputs[0],__num_inj_sites,__available_injection_sites,__masks)
+    i=tf.constant(1)
+
+    '''
+    While exit condition
+    '''
+    def condition(i,_):
+        return i<batch_size
+    
+    '''
+    While body functiom, execute fault injection on each element of the batch
+    '''
+    def iteration(i,outputs):
+        tmp = fault_injection(inputs[i],__num_inj_sites,__available_injection_sites,__masks)
+        outputs = tf.concat([outputs,tmp],0)
+        i+=1
+        return [i,outputs]
+    
+    #Execute a while loop of batch size to apply fault on full batch
+    i, outputs = tf.while_loop(condition, iteration,
+                                [i, init],
+                                [i.get_shape(), tf.TensorShape([None,init.get_shape()[1],init.get_shape()[2],init.get_shape()[3]])])
+    
+    #tf.print(outputs)
+    return outputs
+    
+
+    '''
+    Inject a Fault from the generated injection sites on the selected input
+    '''
+def fault_injection(inputs,__num_inj_sites,__available_injection_sites,__masks):
+    random_index = tf.random.uniform(
+        shape=[1], minval=0,
+        maxval=__num_inj_sites, dtype=tf.int32, seed=22)
+
+    #print(f"Fault from {self.name}")
+    random_tensor   = tf.gather(__available_injection_sites, random_index)
+    random_mask     = tf.gather(__masks, random_index)
+
+    #return [inputs[i] * random_mask + random_tensor, random_tensor, random_mask]
+    return inputs * random_mask + random_tensor
+ 
 class ErrorSimulator(tf.keras.layers.Layer):
 
     def __init__(self, available_injection_sites, masks, num_inj_sites, **kwargs):
@@ -68,21 +120,6 @@ class ErrorSimulator(tf.keras.layers.Layer):
     '''
     def set_mode(self, mode:ErrorSimulatorMode):
         self.mode.assign([[int(mode)]])
-
-    '''
-    Add Fault Mask to the Input to emulate faults
-    '''
-    def fault_injection(self,inputs):
-        random_index = tf.random.uniform(
-            shape=[1], minval=0,
-            maxval=self.__num_inj_sites, dtype=tf.int32, seed=22)
-
-        #print(f"Fault from {self.name}")
-        random_tensor = tf.gather(self.__available_injection_sites, random_index)
-        random_mask = tf.gather(self.__masks, random_index)
-
-        #return [inputs * random_mask + random_tensor, random_tensor, random_mask]
-        return inputs * random_mask + random_tensor
     
     def call(self, inputs):
         #tf.print("MODE LAYER :", self.mode, tf.constant([[int(ErrorSimulatorMode.disabled)]]), output_stream=sys.stdout)
@@ -91,7 +128,7 @@ class ErrorSimulator(tf.keras.layers.Layer):
         #If Enabled  => Return Faulty  output
         return tf.cond(self.mode == tf.constant([[int(ErrorSimulatorMode.disabled)]]),
                        true_fn=lambda: inputs,
-                       false_fn=lambda: self.fault_injection(inputs))
+                       false_fn=lambda: fault_injection_batch(inputs,self.__num_inj_sites,self.__available_injection_sites,self.__masks))
     '''
     #OLD DEPRECATED CALL FUNCTION
     def call(self, inputs):
@@ -102,4 +139,18 @@ class ErrorSimulator(tf.keras.layers.Layer):
         random_tensor = tf.gather(self.__available_injection_sites, random_index)
         random_mask = tf.gather(self.__masks, random_index)
         return [inputs * random_mask + random_tensor, random_tensor, random_mask]
+    '''
+
+    '''
+    def fault_injection(self,inputs,a,b,c):
+        random_index = tf.random.uniform(
+            shape=[1], minval=0,
+            maxval=self.__num_inj_sites, dtype=tf.int32, seed=22)
+
+        random_tensor = tf.gather(self.__available_injection_sites, random_index)
+        random_mask = tf.gather(self.__masks, random_index)
+        output = inputs * random_mask + random_tensor
+
+        #tf.print(output)
+        return output
     '''
