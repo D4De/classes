@@ -1,7 +1,19 @@
-There have been 46290 faults
-            [-1, 1]: 0.4747029596025059
-            Others: 0.5239360553035213
-            NaN: 0.0006696910779866061
-            Zeros: 0.0006912940159861741
-            Valid: 1.00000
-        
+There have been 366263 faults
+[-1, 1]: 0.980861
+Others: 0.017383
+NaN: 0.001756
+Zeros: 0.00311
+Valid: 0.995134
+(False, False, False): 0.0
+(False, False, True): 0.735298
+(False, True, False): 3e-06
+(False, True, True): 0.218571
+(True, False, False): 0.0
+(True, False, True): 0.006648
+(True, True, False): 0.0
+(True, True, True): 0.039486
+Unable to read: IOV_SETP_OP/modeinst_value-igid10.bfm0.1500.txt, skipping.
+Unable to read: IOV_IADD_IMUL_OP/1.npy, skipping.
+Unable to read: IOV_IADD_IMUL_OP/2.npy, skipping.
+Unable to read: IOV_IADD_IMUL_OP/3.npy, skipping.
+Unable to read: IOV_LD_OP/modeinst_value-igid12.bfm0.1000.txt, skipping.

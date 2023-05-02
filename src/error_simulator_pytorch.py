@@ -1,4 +1,4 @@
-from src.injection_sites_generator import *
+from .injection_sites_generator import *
 import torch.nn as nn
 import torch
 
