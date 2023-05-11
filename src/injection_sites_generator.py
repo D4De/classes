@@ -8,8 +8,10 @@ import operator
 import functools
 import traceback
 import struct
+from .operators import OperatorType
 
-from src.operators import OperatorType
+
+from .operators import OperatorType
 
 import logging
 import logging.config
