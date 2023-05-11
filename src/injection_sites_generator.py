@@ -192,7 +192,7 @@ MULTI_CHANNEL_MULTI_BLOCK = 1005
 SHATTERED_CHANNEL = 1006
 QUASI_SHATTERED_CHANNEL = 1007
 SINGLE_CHANNEL_ALTERNATED_BLOCKS = 1008
-FULL_SINGLE_CHANNEL = 1010
+FULL_CHANNELS = 1010
 
 BLOCK_SIZE = 16
 
@@ -839,22 +839,41 @@ class InjectionSitesGenerator(object):
                     np.unravel_index(index, shape=output_size)
                     for index in raveled_offsets if index < max_linear_index
                 ]
-            elif fault_type == FULL_SINGLE_CHANNEL:
-                logger.info("Spatial Type: FULL_SINGLE_CHANNEL. Pattern: Random")     
+            elif fault_type == FULL_CHANNELS:
+                logger.info("Spatial Type: FULL_SINGLE_CHANNEL. Pattern: Random")    
+                max_corr_channels = int(patterns["MAX"][0])
+                max_chan_offset = int(patterns["MAX"][1])
+                min_corrupt_pct = 100 - int(patterns["MAX"][2])
+                max_corrupt_pct = int(patterns["MAX"][3])
+
                 feature_map_size = output_size[2] * output_size[3]
-                min_errors = int(math.ceil(feature_map_size / 2))
-                random_errors = np.random.randint(min_errors, feature_map_size + 1)
-                random_feature_map = np.random.randint(0, output_size[1])
-                random_positions = np.random.choice(feature_map_size, random_errors, replace=False)
+
+                min_errors = int(math.ceil(feature_map_size / 100 * (min_corrupt_pct - 5)))
+                max_errors = int(math.ceil(feature_map_size / 100 * max_corrupt_pct))
+                
+                max_corr_channels = min(max_corr_channels, max_chan_offset, output_size[1])
+                random_channel_count = np.random.randint(1, max_corr_channels)
+                random_corrupted_offsets = np.random.choice(max_chan_offset, random_channel_count, replace=False)
+                corrupted_positions = []
+
+                for chan_offset in random_corrupted_offsets:
+                    random_errors = np.random.randint(min_errors, max_errors + 1)
+                    random_positions = np.random.choice(feature_map_size, random_errors, replace=False)
+                    corrupted_positions += [(chan_offset, pos) for pos in random_positions]
+
+                random_zero_chan = np.random.randint(0, output_size[1])
+                
                 raveled_offsets = [
-                    random_feature_map # Calculate the channel of the slot
-                    * feature_map_size + index
-                    for index in random_positions
+                    (random_zero_chan + chan_offset) # Calculate the channel of the slot
+                    * feature_map_size + idx
+
+                    for chan_offset, idx in corrupted_positions
+                    if random_zero_chan + chan_offset < output_size[1]
                 ]
                 return [
                     np.unravel_index(index, shape=output_size)
                     for index in raveled_offsets if index < max_linear_index
-                ]
+                ]  
             else:   
                 logger.info("Spatial Type: MULTIPLE_FEATURE_MAPS_UNCATEGORIZED. Pattern: Random")
                 indexes = np.random.choice(max_linear_index, size=cardinality, replace=False)
@@ -1089,21 +1108,35 @@ class InjectionSitesGenerator(object):
                         np.unravel_index(index, shape=output_size)
                         for index in indexes
                     ]
-                elif fault_type == FULL_SINGLE_CHANNEL:
-                    corr_percentage = pattern
-                    logger.info(f"Spatial Type: FULL_SINGLE_CHANNEL. Pattern: {corr_percentage}%")     
+                elif fault_type == FULL_CHANNELS:
+                    # Pattern ((0, 70), (3, 90), ...) -> ((<channel_offset>, <% corruption>), ...)
+                    # For this pattern the cardinality is overridden
+                    logger.info(f"Spatial Type: FULL_SINGLE_CHANNEL. Pattern: {pattern}%")     
                     feature_map_size = output_size[2] * output_size[3]
-                    min_errors = int(math.ceil(feature_map_size / 100 * (corr_percentage - 5)))
-                    max_errors = max(int(math.ceil(feature_map_size / 100 * corr_percentage)), feature_map_size)
-    
-                    random_errors = np.random.randint(min_errors, max_errors + 1)
-                    random_feature_map = np.random.randint(0, output_size[1])
-                    random_positions = np.random.choice(feature_map_size, random_errors, replace=False)
-                    raveled_offsets = [
-                        random_feature_map # Calculate the channel of the slot
-                        * feature_map_size + index
 
-                        for index in random_positions
+                    if isinstance(pattern[0], int):
+                        # Trick to avoid errors when there are patterns without double tuple (example (0, 100))
+                        pattern = [pattern]
+
+                    last_channel_idx = pattern[-1][0]
+                    corrupted_positions = []
+
+                    for chan_offset, chan_corrupt_pct in pattern:
+                        min_errors = int(math.ceil(feature_map_size / 100 * (chan_corrupt_pct - 5)))
+                        max_errors = max(int(math.ceil(feature_map_size / 100 * chan_corrupt_pct)), feature_map_size)
+                        random_errors = np.random.randint(min_errors, max_errors + 1)
+                        random_positions = np.random.choice(feature_map_size, random_errors, replace=False)
+                        corrupted_positions += [(chan_offset, pos) for pos in random_positions]
+                    
+
+                    max_start_chan = max(0, output_size[1] - last_channel_idx)
+                    random_zero_chan = np.random.randint(0, max_start_chan)
+                    raveled_offsets = [
+                        (random_zero_chan + chan_offset) # Calculate the channel of the slot
+                        * feature_map_size + idx
+
+                        for chan_offset, idx in corrupted_positions
+                        if random_zero_chan + chan_offset < output_size[1]
                     ]
                     return [
                         np.unravel_index(index, shape=output_size)
