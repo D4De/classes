@@ -8,6 +8,7 @@ import operator
 import functools
 import traceback
 import struct
+from .operators import OperatorType
 
 
 from .operators import OperatorType
@@ -18,9 +19,9 @@ import logging.config
 log_file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logging.conf')
 logging.config.fileConfig(log_file_path)
 
-
 # create logger
 logger = logging.getLogger('InjectionSiteGenerator')
+
 
 class InjectableSite(object):
     """
@@ -139,7 +140,7 @@ class InjectionSite(object):
 
     def get_indexes_values(self) -> Iterable[Tuple[int, int]]:
         return zip(self.__indexes, self.__values)
-    
+
     def as_indexes_list(self) -> List[int]:
         return list(self.__indexes)
 
@@ -191,7 +192,7 @@ MULTI_CHANNEL_MULTI_BLOCK = 1005
 SHATTERED_CHANNEL = 1006
 QUASI_SHATTERED_CHANNEL = 1007
 SINGLE_CHANNEL_ALTERNATED_BLOCKS = 1008
-
+FULL_CHANNELS = 1010
 
 BLOCK_SIZE = 16
 
@@ -199,14 +200,14 @@ MAX_FAILED_ATTEMPTS_IN_A_ROW = 20
 
 
 class InjectionSitesGenerator(object):
-    def __init__(self, injectable_sites, mode, models_folder : str ='/models'):
+    def __init__(self, injectable_sites, mode, models_folder: str = '/models'):
         self.__injectable_sites = injectable_sites
         self.__cardinalities = self.__load_cardinalities(models_folder)
         self.__corrupted_values_domain = self.__load_corrupted_values_domain(mode, models_folder)
         self.__spatial_models = self.__load_spatial_models(models_folder)
         self.__debugcardinality = -1
 
-    def generate_random_injection_sites(self, size : int) -> Tuple[List[InjectionSite], List[int], List[int]]:
+    def generate_random_injection_sites(self, size: int) -> Tuple[List[InjectionSite], List[int], List[int]]:
 
         injectables_site_indexes = np.random.choice(len(self.__injectable_sites), size=size)
         injection_sites = []
@@ -256,7 +257,8 @@ class InjectionSitesGenerator(object):
                     total_failed_injections += 1
             if failed_injections_in_a_row == MAX_FAILED_ATTEMPTS_IN_A_ROW:
                 logger.error(f"Injection failed {MAX_FAILED_ATTEMPTS_IN_A_ROW} in a row. Giving up.")
-        logger.info(f"Number of injection attempted: {total_injections_attempts}. Number of injection failed: {total_failed_injections}")
+        logger.info(
+            f"Number of injection attempted: {total_injections_attempts}. Number of injection failed: {total_failed_injections}")
 
         return injection_sites, cardinalities, patterns
 
@@ -268,7 +270,7 @@ class InjectionSitesGenerator(object):
         temp_names = [model.get_model_name() for model in models]
         return temp_names
 
-    def __load_cardinalities(self, models_folder : str):
+    def __load_cardinalities(self, models_folder: str):
         """
         Loads the cardinalities for each model.
         It creates a dictionary for each model, containing
@@ -285,7 +287,8 @@ class InjectionSitesGenerator(object):
             separator = model_operator_name.index("_")
             model_prefix = model_operator_name[:separator], model_operator_name[separator + 1:]
             experiment_name = model_prefix[1] + "_" + model_prefix[0]
-            model_cardinalities_path = os.path.join(models_folder,model_operator_name,f'{experiment_name}_anomalies_count.json')
+            model_cardinalities_path = os.path.join(models_folder, model_operator_name,
+                                                    f'{experiment_name}_anomalies_count.json')
             # Open the cardinalities file path and load it as a json file.
             with open(model_cardinalities_path, "r") as cardinalities_json:
                 model_cardinalities = json.load(cardinalities_json)
@@ -342,8 +345,8 @@ class InjectionSitesGenerator(object):
         corrupted_values_domain = {}  # Map of models and their corrupted values' domain.
         for model_operator_name in self.__get_models():
             # The file is simply named as "value_analysis" and is common to each model.
-            
-            value_path = os.path.join(models_folder,model_operator_name,'value_analysis.txt')
+
+            value_path = os.path.join(models_folder, model_operator_name, 'value_analysis.txt')
             with open(value_path, "r") as value_analysis_file:
                 # Read the files as text lines.
                 model_corrupted_values_domain = OrderedDict()
@@ -364,7 +367,8 @@ class InjectionSitesGenerator(object):
     def __load_spatial_models(self, models_folder):
         spatial_models = {}
         for model_operator_name in self.__get_models():
-            spatial_model_path = os.path.join(models_folder, model_operator_name, f'{model_operator_name}_spatial_model.json') 
+            spatial_model_path = os.path.join(models_folder, model_operator_name,
+                                              f'{model_operator_name}_spatial_model.json')
             with open(spatial_model_path, "r") as spatial_model_json:
                 spatial_model = json.load(spatial_model_json)
                 if operator_names_table[model_operator_name] not in spatial_models:
@@ -513,7 +517,7 @@ class InjectionSitesGenerator(object):
             for offset in offsets:
                 indexes.append(random_starting_index + offset * scale_factor)
             return [np.unravel_index(index, shape=output_size) for index in indexes]
-                
+
         def random_pattern(fault_type, output_size, cardinality):
             if fault_type == SAME_FEATURE_MAP_SAME_ROW:
                 logger.info("Spatial Type: SAME_FEATURE_MAP_SAME_ROW. Pattern: Random")
@@ -636,20 +640,23 @@ class InjectionSitesGenerator(object):
                 injection_slots_per_channel = max_index_offset // 4
                 needed_channels = (cardinality + injection_slots_per_channel - 1) // injection_slots_per_channel
 
-                random_number_of_channels = np.random.choice(min(needed_channels, max_chan_offset), max(needed_channels, max_chan_offset) + 1)
-                random_chan_offsets = sorted(np.random.choice(max_chan_offset, replace=False, size=random_number_of_channels))
+                random_number_of_channels = np.random.choice(min(needed_channels, max_chan_offset),
+                                                             max(needed_channels, max_chan_offset) + 1)
+                random_chan_offsets = sorted(
+                    np.random.choice(max_chan_offset, replace=False, size=random_number_of_channels))
                 max_random_chan = random_chan_offsets[-1]
-                                                  
+
                 random_base_chan = np.random.randint(0, output_size[1] - max_random_chan)
 
                 n_slots = len(random_chan_offsets) * injection_slots_per_channel
                 random_slots = np.random.choice(n_slots, replace=False, size=min(n_slots, cardinality))
                 raveled_offsets = [
                     (random_base_chan +
-                    random_chan_offsets[(slot // injection_slots_per_channel)]) # Calculate the channel index of the slot
-                    * feature_map_size 
+                     random_chan_offsets[
+                         (slot // injection_slots_per_channel)])  # Calculate the channel index of the slot
+                    * feature_map_size
                     + (slot % injection_slots_per_channel) * 4
-                    + random_start_index #
+                    + random_start_index  #
                     for slot in random_slots
                 ]
                 return [
@@ -670,7 +677,7 @@ class InjectionSitesGenerator(object):
                 allow_remainder_block = remainder_block_length == align or remainder_block_length * max_chan_offset >= cardinality
 
                 if allow_remainder_block:
-                    n_blocks = (feature_map_size + align - 1) // align                    
+                    n_blocks = (feature_map_size + align - 1) // align
                 else:
                     # Exclude remained block (last block)
                     n_blocks = feature_map_size // align
@@ -681,9 +688,11 @@ class InjectionSitesGenerator(object):
                 # Minimum channels needed for reaching error
                 needed_channels = (cardinality + block_size - 1) // block_size
                 # Select number of corrupted channels in the range allowed
-                random_number_of_channels = np.random.randint(min(needed_channels, max_chan_offset), max(needed_channels, max_chan_offset) + 1)
+                random_number_of_channels = np.random.randint(min(needed_channels, max_chan_offset),
+                                                              max(needed_channels, max_chan_offset) + 1)
                 # Select which channels will be corrupted (starting from the base channel drawn after)
-                random_chan_offsets = sorted(np.random.choice(max_chan_offset, replace=False, size=min(needed_channels, max_chan_offset)))
+                random_chan_offsets = sorted(
+                    np.random.choice(max_chan_offset, replace=False, size=min(needed_channels, max_chan_offset)))
                 # Select the distance between the first and the last index of channels
                 max_random_chan = random_chan_offsets[-1]
                 random_base_chan = np.random.randint(low=0, high=output_size[1] - max_random_chan)
@@ -694,10 +703,10 @@ class InjectionSitesGenerator(object):
                 # Map slot number to raveled index
                 raveled_offsets = [
                     (random_base_chan +
-                    random_chan_offsets[(slot // injection_slots_per_channel)]) # Calculate the channel of the slot
-                    * feature_map_size 
-                    + (slot % injection_slots_per_channel) 
-                    + random_block * align #
+                     random_chan_offsets[(slot // injection_slots_per_channel)])  # Calculate the channel of the slot
+                    * feature_map_size
+                    + (slot % injection_slots_per_channel)
+                    + random_block * align  #
                     for slot in random_slots
                 ]
                 return [
@@ -720,7 +729,7 @@ class InjectionSitesGenerator(object):
                 allow_remainder_block = remainder_block_length == align or remainder_block_length >= cardinality
 
                 if allow_remainder_block:
-                    n_blocks = (max_linear_index + align - 1) // align                    
+                    n_blocks = (max_linear_index + align - 1) // align
                 else:
                     # Exclude remained block (last block)
                     n_blocks = max_linear_index // align
@@ -768,55 +777,103 @@ class InjectionSitesGenerator(object):
                     for index in raveled_offsets if index < max_linear_index
                 ]
             elif fault_type == MULTI_CHANNEL_MULTI_BLOCK:
-                logger.info("Spatial Type: MULTI_CHANNEL_MULTI_BLOCK. Pattern: Random")     
+                logger.info("Spatial Type: MULTI_CHANNEL_MULTI_BLOCK. Pattern: Random")
                 feature_map_size = output_size[2] * output_size[3]
                 max_corr_channels = int(patterns["MAX"][0])
                 max_chan_offset = int(patterns["MAX"][1])
                 min_idx = int(patterns["MAX"][2])
                 max_idx = max(int(patterns["MAX"][3]), feature_map_size)
-
+                # Calculate the maximum number of feature maps to affect
                 max_feature_maps = min(output_size[1], max_corr_channels, max_chan_offset)
+                # Calculate the maximum errors that can fit in a feature map
+                # this number is limited by the max_idx - min_idx of the paramters, or the feature map size
                 max_faults_per_channel = min(max_idx - min_idx, feature_map_size)
+                # Minimum number of feature map needed for injecting the requred cardinality
                 min_feature_maps = min(max_feature_maps, int(math.ceil(cardinality // max_faults_per_channel)))
+                # Choose a block size that is no bigger than the feature map size and the maximum distance from the zero index
                 allowed_block_sizes = [i for i in [16,32,64] if i <= min(feature_map_size, max_idx)]
-                if len(allowed_block_sizes):
+                if len(allowed_block_sizes) == 0:
                     allowed_block_sizes = [max_idx]
+                # Choose randomly the block size to use in the generated pattern
                 random_block_size = np.random.choice(allowed_block_sizes, size=1, replace=False)
-
+                # Number to channles to affect
                 random_number_of_channels = np.randint(min_feature_maps, max_feature_maps)
+                # Choose the "zero channel" (first corrupted channel by index).
                 random_start_feature_map = np.randint(0, max(0, output_size[1] - max_chan_offset))
+                # Choose the channel indices to corrupt, relative to the "zero channel"
                 random_chan_offsets = np.random.choice(min(output_size[1], max_chan_offset), size=random_number_of_channels)
+                # Sum the offsets
                 random_channels = [random_start_feature_map + chan for chan in random_chan_offsets]
                 max_full_block_errors = max(len(random_channels), cardinality // random_block_size)
+                # Choose some channels that will have the full block corrupted, the other will just have random errors
                 full_block_channels = list(set(np.random.choice(random_channels, size=max_full_block_errors, replace=True)))
-
+                # Number of errors generated by the full block channels
                 block_error_count = len(full_block_channels) * random_block_size
+                # Slots = Positions that can contain corrupted values
+                # Corrupted values inside the full blocks
                 block_slots = [(chan, offset) for chan in full_block_channels for offset in range(0, random_block_size)]
+                # Remaining values outside from the full blocks, these may contain or not other errors
                 injectable_slots = [(chan, offset) for chan in random_channels for offset in range(-min_idx, max_idx) if chan not in full_block_channels or offset < 0 or offset > random_block_size]
                 remaining_errors = cardinality - block_error_count
+                # Draw randomly the slots outside from full blocks that will contain the rrors
                 other_errors = list(set(np.random.choice(remaining_errors, size=min(len(injectable_slots,remaining_errors)), replace=False)))
+                # Merge the full block errors with the other errors
                 all_errors = block_slots + other_errors
                 min_zero_index = min(-min_idx, feature_map_size)
                 max_zero_index = max(0, feature_map_size - max_idx)
-                
+
                 if min_zero_index >= max_zero_index:
                     random_zero_index = 0
                 else:
-                    random_zero_index = np.randint(min_zero_index, max_zero_index)
+                    random_zero_index = np.random.randint(min_zero_index, max_zero_index)
                 
                 raveled_offsets = [
-                    chan # Calculate the channel of the slot
-                    * feature_map_size 
+                    chan  # Calculate the channel of the slot
+                    * feature_map_size
                     + offset + random_zero_index
 
                     for chan, offset in all_errors
-                    if  0 <= chan * feature_map_size + offset + random_zero_index < max_linear_index
+                    if 0 <= chan * feature_map_size + offset + random_zero_index < max_linear_index
                 ]
                 return [
                     np.unravel_index(index, shape=output_size)
                     for index in raveled_offsets if index < max_linear_index
                 ]
+            elif fault_type == FULL_CHANNELS:
+                logger.info("Spatial Type: FULL_SINGLE_CHANNEL. Pattern: Random")    
+                max_corr_channels = int(patterns["MAX"][0])
+                max_chan_offset = int(patterns["MAX"][1])
+                min_corrupt_pct = 100 - int(patterns["MAX"][2])
+                max_corrupt_pct = int(patterns["MAX"][3])
 
+                feature_map_size = output_size[2] * output_size[3]
+
+                min_errors = int(math.ceil(feature_map_size / 100 * (min_corrupt_pct - 5)))
+                max_errors = int(math.ceil(feature_map_size / 100 * max_corrupt_pct))
+                
+                max_corr_channels = min(max_corr_channels, max_chan_offset, output_size[1])
+                random_channel_count = np.random.randint(1, max_corr_channels)
+                random_corrupted_offsets = np.random.choice(max_chan_offset, random_channel_count, replace=False)
+                corrupted_positions = []
+
+                for chan_offset in random_corrupted_offsets:
+                    random_errors = np.random.randint(min_errors, max_errors + 1)
+                    random_positions = np.random.choice(feature_map_size, random_errors, replace=False)
+                    corrupted_positions += [(chan_offset, pos) for pos in random_positions]
+
+                random_zero_chan = np.random.randint(0, output_size[1])
+                
+                raveled_offsets = [
+                    (random_zero_chan + chan_offset) # Calculate the channel of the slot
+                    * feature_map_size + idx
+
+                    for chan_offset, idx in corrupted_positions
+                    if random_zero_chan + chan_offset < output_size[1]
+                ]
+                return [
+                    np.unravel_index(index, shape=output_size)
+                    for index in raveled_offsets if index < max_linear_index
+                ]  
             else:   
                 logger.info("Spatial Type: MULTIPLE_FEATURE_MAPS_UNCATEGORIZED. Pattern: Random")
                 indexes = np.random.choice(max_linear_index, size=cardinality, replace=False)
@@ -889,7 +946,7 @@ class InjectionSitesGenerator(object):
                     indexes = np.random.choice(output_size[2] * output_size[3], replace=False, size=cardinality)
                     return [
                         np.unravel_index(index + random_feature_map * output_size[2] * output_size[3],
-                                            shape=output_size)
+                                         shape=output_size)
                         for index in indexes
                     ]
                 elif fault_type == MULTIPLE_FEATURE_MAPS_BULLET_WAKE:
@@ -939,13 +996,13 @@ class InjectionSitesGenerator(object):
                     allow_remainder_block = remainder_block_length == align or remainder_block_length >= cardinality
 
                     if allow_remainder_block:
-                        n_blocks = (max_linear_index + align - 1) // align                    
+                        n_blocks = (max_linear_index + align - 1) // align
                     else:
                         # Exclude remained block (last block)
                         n_blocks = max_linear_index // align
                     random_block = np.random.randint(0, n_blocks)
                     random_start_index = random_block * align
-                    indexes = [     
+                    indexes = [
                         random_start_index + tensor_offset
                         for tensor_offset in spatial_pattern
                     ]
@@ -956,12 +1013,12 @@ class InjectionSitesGenerator(object):
                 elif (
                         fault_type == MULTIPLE_FEATURE_MAPS_SHATTER_GLASS or
                         fault_type == MULTIPLE_FEATURE_MAPS_QUASI_SHATTER_GLASS or
-                        fault_type == SKIP_4 or 
+                        fault_type == SKIP_4 or
                         fault_type == SHATTERED_CHANNEL or
                         fault_type == QUASI_SHATTERED_CHANNEL or
                         fault_type == MULTI_CHANNEL_MULTI_BLOCK
                 ):
-                    
+
                     if fault_type == MULTIPLE_FEATURE_MAPS_SHATTER_GLASS:
                         pattern_name = "MULTIPLE_FEATURE_MAPS_SHATTER_GLASS"
                     elif fault_type == MULTIPLE_FEATURE_MAPS_QUASI_SHATTER_GLASS:
@@ -980,13 +1037,14 @@ class InjectionSitesGenerator(object):
                     max_feat_map_offset = max(feat_map_offsets[-1] for channel_offset, feat_map_offsets in pattern)
                     # min_feat_map_offset must not be more than zero, by construction
                     min_feat_map_offset = min(feat_map_offsets[0] for channel_offset, feat_map_offsets in pattern)
-                    delta_feat_map_offset = max_feat_map_offset - min_feat_map_offset  
+                    delta_feat_map_offset = max_feat_map_offset - min_feat_map_offset
                     # Check the applicability of the pattern (enough channels and enough offset)
                     feature_map_size = output_size[2] * output_size[3]
                     assert max_chan_offset < output_size[1]
                     assert delta_feat_map_offset <= feature_map_size
                     # Fit the errors keeping in mind possible negative values values then they should fit
-                    random_start_index = np.random.randint(0, feature_map_size - delta_feat_map_offset) - min_feat_map_offset
+                    random_start_index = np.random.randint(0,
+                                                           feature_map_size - delta_feat_map_offset) - min_feat_map_offset
                     # Select the base channel
                     random_channel = np.random.randint(0, output_size[1] - max_chan_offset)
                     indexes = [
@@ -1011,7 +1069,7 @@ class InjectionSitesGenerator(object):
                     indexes = [
                         (random_channel + channel_offset) * feature_map_size + random_start_index + feat_map_offset
                         for channel_offset, feat_map_offsets in spatial_pattern for feat_map_offset in feat_map_offsets
-                        if 0 <= random_start_index + feat_map_offset < feature_map_size 
+                        if 0 <= random_start_index + feat_map_offset < feature_map_size
                     ]
                     return [
                         np.unravel_index(index, shape=output_size)
@@ -1044,11 +1102,45 @@ class InjectionSitesGenerator(object):
                     indexes = [
                         random_channel * feature_map_size + random_start_index + feat_map_offset
                         for feat_map_offset in spatial_pattern
-                        if 0 <= random_start_index + feat_map_offset < feature_map_size 
+                        if 0 <= random_start_index + feat_map_offset < feature_map_size
                     ]
                     return [
                         np.unravel_index(index, shape=output_size)
                         for index in indexes
+                    ]
+                elif fault_type == FULL_CHANNELS:
+                    # Pattern ((0, 70), (3, 90), ...) -> ((<channel_offset>, <% corruption>), ...)
+                    # For this pattern the cardinality is overridden
+                    logger.info(f"Spatial Type: FULL_SINGLE_CHANNEL. Pattern: {pattern}%")     
+                    feature_map_size = output_size[2] * output_size[3]
+
+                    if isinstance(pattern[0], int):
+                        # Trick to avoid errors when there are patterns without double tuple (example (0, 100))
+                        pattern = [pattern]
+
+                    last_channel_idx = pattern[-1][0]
+                    corrupted_positions = []
+
+                    for chan_offset, chan_corrupt_pct in pattern:
+                        min_errors = int(math.ceil(feature_map_size / 100 * (chan_corrupt_pct - 5)))
+                        max_errors = max(int(math.ceil(feature_map_size / 100 * chan_corrupt_pct)), feature_map_size)
+                        random_errors = np.random.randint(min_errors, max_errors + 1)
+                        random_positions = np.random.choice(feature_map_size, random_errors, replace=False)
+                        corrupted_positions += [(chan_offset, pos) for pos in random_positions]
+                    
+
+                    max_start_chan = max(0, output_size[1] - last_channel_idx)
+                    random_zero_chan = np.random.randint(0, max_start_chan)
+                    raveled_offsets = [
+                        (random_zero_chan + chan_offset) # Calculate the channel of the slot
+                        * feature_map_size + idx
+
+                        for chan_offset, idx in corrupted_positions
+                        if random_zero_chan + chan_offset < output_size[1]
+                    ]
+                    return [
+                        np.unravel_index(index, shape=output_size)
+                        for index in raveled_offsets if index < max_linear_index
                     ]                    
                 elif fault_type == MULTIPLE_FEATURE_MAPS_UNCATEGORIZED:
                     logger.info(f"Spatial Type: MULTIPLE_FEATURE_MAPS_UNCATEGORIZED. Pattern: {pattern}")

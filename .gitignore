@@ -5,3 +5,4 @@ examples/pytorch/mnist_data
 examples/pytorch/data/MNIST
 mnist
 load.py
+__pycache__
