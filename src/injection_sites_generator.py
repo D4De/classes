@@ -192,6 +192,7 @@ MULTI_CHANNEL_MULTI_BLOCK = 1005
 SHATTERED_CHANNEL = 1006
 QUASI_SHATTERED_CHANNEL = 1007
 SINGLE_CHANNEL_ALTERNATED_BLOCKS = 1008
+SKIP_2 = 1009
 FULL_CHANNELS = 1010
 
 BLOCK_SIZE = 16
@@ -625,8 +626,13 @@ class InjectionSitesGenerator(object):
                     np.unravel_index(index, shape=output_size)
                     for index in indexes
                 ]
-            elif fault_type == SKIP_4:
-                logger.info("Spatial Type: MULTIPLE_FEATURE_SKIP_4. Pattern: Random")
+            elif fault_type == SKIP_4 or fault_type == SKIP_2:
+                if fault_type == SKIP_2:
+                    skip_amount = 2
+                    logger.info("Spatial Type: SKIP_2. Pattern: Random")
+                else:
+                    skip_amount = 4
+                    logger.info("Spatial Type: SKIP_4. Pattern: Random")
                 max_offsets = [
                     int(patterns["MAX"][0]),
                     int(patterns["MAX"][1]),
@@ -637,7 +643,7 @@ class InjectionSitesGenerator(object):
                 max_index_offset = min(max_index_offset, feature_map_size)
                 random_start_index = np.random.randint(low=0, high=feature_map_size - max_index_offset)
 
-                injection_slots_per_channel = max_index_offset // 4
+                injection_slots_per_channel = max_index_offset // skip_amount
                 needed_channels = (cardinality + injection_slots_per_channel - 1) // injection_slots_per_channel
 
                 random_number_of_channels = np.random.choice(min(needed_channels, max_chan_offset),
@@ -655,7 +661,7 @@ class InjectionSitesGenerator(object):
                      random_chan_offsets[
                          (slot // injection_slots_per_channel)])  # Calculate the channel index of the slot
                     * feature_map_size
-                    + (slot % injection_slots_per_channel) * 4
+                    + (slot % injection_slots_per_channel) * skip_amount
                     + random_start_index  #
                     for slot in random_slots
                 ]
@@ -1014,6 +1020,7 @@ class InjectionSitesGenerator(object):
                         fault_type == MULTIPLE_FEATURE_MAPS_SHATTER_GLASS or
                         fault_type == MULTIPLE_FEATURE_MAPS_QUASI_SHATTER_GLASS or
                         fault_type == SKIP_4 or
+                        fault_type == SKIP_2 or
                         fault_type == SHATTERED_CHANNEL or
                         fault_type == QUASI_SHATTERED_CHANNEL or
                         fault_type == MULTI_CHANNEL_MULTI_BLOCK
@@ -1025,6 +1032,8 @@ class InjectionSitesGenerator(object):
                         pattern_name = "MULTIPLE_FEATURE_MAPS_QUASI_SHATTER_GLASS"
                     elif fault_type == SKIP_4:
                         pattern_name = "SKIP_4"
+                    elif fault_type == SKIP_2:
+                        pattern_name = "SKIP_2"
                     elif fault_type == SHATTERED_CHANNEL:
                         pattern_name = "SHATTERED_CHANNEL"
                     elif fault_type == QUASI_SHATTERED_CHANNEL:
