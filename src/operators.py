@@ -20,6 +20,13 @@ class OperatorType(enum.Enum):
     Add = 12  # Add between two tensors.
     Conv2D = 13
     FusedBatchNorm = 14
+    ConvFFTwrv = 15
+    ConvFFTrv = 16
+    ConvWinowrv = 17
+    ConvWinorv = 18
+    ConvGemmwrv = 19
+    ConvGemmrv = 20
+
 
     def __str__(self):
         return self.name
@@ -64,6 +71,18 @@ class OperatorType(enum.Enum):
             return "S1_convolution"
         elif self == OperatorType.FusedBatchNorm:
             return "S1_batch_norm"
+        elif self == OperatorType.ConvFFTwrv:
+            return "S1_convfftwrv"
+        elif self == OperatorType.ConvFFTrv:
+            return "S1_convfftrv"
+        elif self == OperatorType.ConvWinowrv:
+            return "S1_convwinowrv"
+        elif self == OperatorType.ConvWinorv:
+            return "S1_convwinorv"
+        elif self == OperatorType.ConvGemmwrv:
+            return "S1_convgemmwrv"
+        elif self == OperatorType.ConvGemmrv:
+            return "S1_convgemmrv"
         else:
             raise ValueError("Unable to find a model for this operator: {}".format(self))
 

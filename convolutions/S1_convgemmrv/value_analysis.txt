@@ -1,0 +1,6 @@
+There have been 14363 faults
+[-1, 1]: 1.0
+Others: 0.0
+Nan: 0.0
+Zeros: 0.0
+Valid: 1.00000

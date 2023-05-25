@@ -167,7 +167,13 @@ operator_names_table = {
     "S1_sigmoid": "Sigmoid",
     "S2_convolution": "Conv2D3x3",
     "S3_convolution": "Conv2D3x3S2",
-    "S1_convolution_test": "Conv2D1x1"
+    "S1_convolution_test": "Conv2D1x1",
+    "S1_convfftwrv": "ConvFFTwrv",
+    "S1_convfftrv": "ConvFFTrv",
+    "S1_convwinowrv": "ConvWinowrv",
+    "S1_convwinorv": "ConvWinorv",
+    "S1_convgemmwrv": "ConvGemmwrv",
+    "S1_convgemmrv": "ConvGemmrv"
 }
 
 NAN = "NaN"
