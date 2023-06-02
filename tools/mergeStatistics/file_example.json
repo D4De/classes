@@ -1,0 +1,12 @@
+[
+  {
+    "file": "relative/path/to/the/experiment1",
+    "weigth": 0.8
+  },
+  {
+    "file": "relative/path/to/the/experiment2",
+    "weigth": 0.2
+  },
+  "__ 'file' is the key which represent the names of the files you want to merge __",
+  "__ 'weight' is the weight of probability you want to set to the file __"
+]
