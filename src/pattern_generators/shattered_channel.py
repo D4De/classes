@@ -1,9 +1,7 @@
-from typing import List, Dict, Any, Tuple
+from typing import List, Dict, Any, Tuple, Optional
 
 import numpy as np
-from pyparsing import Optional
-
-from pattern_generators.utils import convert_to_linearized_index, random_channels, random_int_from_pct_range
+from pattern_generators.generator_utils import convert_to_linearized_index, random_channels, random_int_from_pct_range
 
 
 def shattered_channel_generator(output_shape : List[int], params : Dict[str, Any]) -> Optional[List[int]]:
