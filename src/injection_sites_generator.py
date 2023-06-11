@@ -204,14 +204,10 @@ class InjectionSitesGenerator(object):
         self.__injectable_sites = injectable_sites
         self.__models = self.__load_models(models_folder)
 
-    def generate_random_injection_sites(self, size: int) -> Tuple[List[InjectionSite], List[int], List[int]]:
+    def generate_random_injection_sites(self, size: int) -> List[InjectionSite]:
 
         injectables_site_indexes = np.random.choice(len(self.__injectable_sites), size=size)
         injection_sites = []
-        cardinalities = []
-        patterns = []
-        total_failed_injections = 0
-        total_injections_attempts = 0
 
         for index in injectables_site_indexes:
             injectable_site = self.__injectable_sites[index]
