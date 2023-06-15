@@ -9,20 +9,9 @@ import struct
 from src.pattern_generators import generator_functions
 
 from src.utils import random_choice, unpack_table
-from .operators import OperatorType
+from src.loggers import get_logger
 
-
-from .operators import OperatorType
-
-import logging
-import logging.config
-
-log_file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logging.conf')
-logging.config.fileConfig(log_file_path)
-
-# create logger
-logger = logging.getLogger('InjectionSiteGenerator')
-
+logger = get_logger('InjectionSiteGenerator')
 
 class InjectableSite(object):
     """

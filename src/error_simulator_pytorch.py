@@ -2,6 +2,9 @@ from .injection_sites_generator import *
 import torch.nn as nn
 import torch
 
+from src.loggers import get_logger
+
+logger = get_logger("ErrorSimulator")
 
 class Simulator(nn.Module):
     def __init__(self, layer_type, size, models_folder):

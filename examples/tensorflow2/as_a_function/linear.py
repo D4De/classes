@@ -33,16 +33,13 @@ from src.injection_sites_generator import *
 #
 # The function will return the corrupted output of the model
 
-def generate_injection_sites(sites_count, layer_type, layer_name, size, models_path, models_mode=''):
-    injection_site = InjectableSite(layer_type, layer_name, size)
+def generate_injection_sites(sites_count, layer_type, size, models_path):
+    injection_site = InjectableSite(layer_type, size)
 
-    try:
-        injection_sites, cardinality, pattern = InjectionSitesGenerator([injection_site], models_mode, models_path) \
+    injection_sites = InjectionSitesGenerator([injection_site], models_path) \
             .generate_random_injection_sites(sites_count)
-    except:
-        return []
 
-    return injection_sites, cardinality, pattern
+    return injection_sites
 
 
 def build_model(input_shape, saved_weights=None):
@@ -87,17 +84,15 @@ def inject_layer(model, img, selected_layer_idx, layer_type, layer_output_shape_
     get_model_output = K.function([model.layers[selected_layer_idx + 1].input], [model.layers[-1].output])
 
     output_selected_layer = get_selected_layer_output([np.expand_dims(img, 0)])[0]
+    range_min = np.min(output_selected_layer)
+    range_max = np.max(output_selected_layer)
 
-    injection_site, cardinality, pattern = generate_injection_sites(1, layer_type, '',
-                                                                    layer_output_shape_cf, models_path)
+    injection_site = generate_injection_sites(1, layer_type, layer_output_shape_cf, models_path)
 
     if len(injection_site) > 0:
         for idx, value in injection_site[0].get_indexes_values():
             channel_last_idx = (idx[0], idx[2], idx[3], idx[1])
-            if value.value_type == '[-1,1]':
-                output_selected_layer[channel_last_idx] += value.raw_value
-            else:
-                output_selected_layer[channel_last_idx] = value.raw_value
+            output_selected_layer[channel_last_idx] = value.get_value(range_min, range_max)
 
     model_output = get_model_output(output_selected_layer)
 
@@ -116,7 +111,7 @@ errors = 0
 
 
 for _ in range(NUM_INJECTIONS):
-    res = inject_layer(model, x_val[NUM], SELECTED_LAYER_IDX, OperatorType['Conv2D'], '(None, 16, 27, 27)',
+    res = inject_layer(model, x_val[NUM], SELECTED_LAYER_IDX, 'conv_gemm', '(None, 16, 27, 27)',
                        models_path=MODELS_PATH)
     if np.argmax(res) != y_val[NUM]:
         errors += 1

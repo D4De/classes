@@ -36,19 +36,16 @@ from src.injection_sites_generator import *
 #   It should be noted that this code doesn't work without some modifications, we currently do not load a real dataset
 #   and do not provide an evaluation function for the output which is strictly dependent on the domain of the model.
 
-def generate_injection_sites(sites_count, layer_type, layer_name, size, models_path, models_mode=''):
+def generate_injection_sites(sites_count, layer_type, layer_name, size, models_path):
     """
     models_path: relative path form the pwd to the models folder
     """
     injection_site = InjectableSite(layer_type, layer_name, size)
 
-    try:
-        injection_sites, cardinality, pattern = InjectionSitesGenerator([injection_site], models_mode, models_path) \
+    injection_sites = InjectionSitesGenerator([injection_site], models_path) \
             .generate_random_injection_sites(sites_count)
-    except:
-        return []
 
-    return injection_sites, cardinality, pattern
+    return injection_sites
 
 
 def double_conv_block(x, n_filters, nameType=None):
@@ -126,17 +123,13 @@ def main():
     get_final_output = K.function([model.layers[concatenate_idx].input], [model.layers[-1].output])
 
     selected_layer_output = get_selected_layer_output(img)
-
-    injection_site, cardinality, pattern = generate_injection_sites(1, OperatorType['Conv2D'], '',
-                                                                    '(None, 64, 64, 64)', models_path='models')
+    range_min, range_max = np.min(selected_layer_output), np.max(selected_layer_output)
+    injection_site = generate_injection_sites(1, 'conv_gemm', '(None, 64, 64, 64)', models_path='models')
 
     if len(injection_site) > 0:
         for idx, value in injection_site[0].get_indexes_values():
             channel_last_idx = (idx[0], idx[2], idx[3], idx[1])
-            if value.value_type == '[-1,1]':
-                selected_layer_output[channel_last_idx] += value.raw_value
-            else:
-                selected_layer_output[channel_last_idx] = value.raw_value
+            selected_layer_output[channel_last_idx] = value.get_value(range_min, range_max)
 
     conv2_output = get_conv2_output(img)
     input_concatenate = get_input_concatenate(selected_layer_output)

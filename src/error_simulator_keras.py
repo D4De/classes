@@ -1,21 +1,30 @@
 import tensorflow as tf
 import numpy as np
-from .injection_sites_generator import InjectableSite, InjectionSitesGenerator
+from .injection_sites_generator import InjectableSite, InjectionSitesGenerator, InjectionValue
 from enum import IntEnum
 import sys
 
-def create_injection_sites_layer_simulator(num_requested_injection_sites, layer_type, layer_output_shape_cf,
-                                           layer_output_shape_cl, models_folder):
-    def __generate_injection_sites(sites_count, layer_type, size, models_mode=''):
+from src.loggers import get_logger
 
-        injection_site = InjectableSite(layer_type, '', size)
-        try:
-            injection_sites = InjectionSitesGenerator([injection_site],
-                                                                            models_mode, models_folder)\
-                .generate_random_injection_sites(sites_count)
-        except:
-            return []
+logger = get_logger("ErrorSimulator")
+
+def create_injection_sites_layer_simulator(num_requested_injection_sites : int, layer_type : str, layer_output_shape_cf : str,
+                                           layer_output_shape_cl : str, models_folder : str, range_min : float = None, range_max : float = None):
+    def __generate_injection_sites(sites_count : int, layer_type : str, size : int):
+
+        injection_site = InjectableSite(layer_type, size)
+
+        injection_sites = InjectionSitesGenerator([injection_site], models_folder).generate_random_injection_sites(sites_count)
+
         return injection_sites
+
+    if range_min is None or range_max is None:
+        range_min = -30.0
+        range_max = 30.0
+        logger.warn(f"""range_min and/or range_max are not specified, so their default values will be kept ({range_min=}, {range_max=}). 
+                        You may want to change the defaults by calculating the average range_min and range_max average, 
+                        and specify them as inputs of this function. """)
+
 
     available_injection_sites = []
     masks = []
@@ -29,11 +38,8 @@ def create_injection_sites_layer_simulator(num_requested_injection_sites, layer_
         if len(curr_injection_sites) > 0:
             for idx, value in curr_injection_sites[0].get_indexes_values():
                 channel_last_idx = (idx[0], idx[2], idx[3], idx[1])
-                if value.value_type == '[-1,1]':
-                    curr_inj_nump[channel_last_idx[1:]] += value.raw_value
-                else:
-                    curr_mask[channel_last_idx[1:]] = 0
-                    curr_inj_nump[channel_last_idx[1:]] += value.raw_value
+                curr_mask[channel_last_idx[1:]] = 0
+                curr_inj_nump[channel_last_idx[1:]] += value.get_value()
 
             available_injection_sites.append(curr_inj_nump)
             masks.append(curr_mask)
@@ -104,8 +110,6 @@ class ErrorSimulator(tf.keras.layers.Layer):
         self.__num_inj_sites = num_inj_sites
         self.__available_injection_sites = []
         self.__masks = []
-        self.__cardinalities = []
-        self.__patterns = []
 
         #Parameter to chose between enable/disable faults
         self.mode = tf.Variable([[int(ErrorSimulatorMode.enabled)]],shape=tf.TensorShape((1,1)),trainable=False) 
@@ -129,28 +133,4 @@ class ErrorSimulator(tf.keras.layers.Layer):
         return tf.cond(self.mode == tf.constant([[int(ErrorSimulatorMode.disabled)]]),
                        true_fn=lambda: inputs,
                        false_fn=lambda: fault_injection_batch(inputs,self.__num_inj_sites,self.__available_injection_sites,self.__masks))
-    '''
-    #OLD DEPRECATED CALL FUNCTION
-    def call(self, inputs):
-        random_index = tf.random.uniform(
-            shape=[1], minval=0,
-            maxval=self.__num_inj_sites, dtype=tf.int32, seed=22)
-
-        random_tensor = tf.gather(self.__available_injection_sites, random_index)
-        random_mask = tf.gather(self.__masks, random_index)
-        return [inputs * random_mask + random_tensor, random_tensor, random_mask]
-    '''
-
-    '''
-    def fault_injection(self,inputs,a,b,c):
-        random_index = tf.random.uniform(
-            shape=[1], minval=0,
-            maxval=self.__num_inj_sites, dtype=tf.int32, seed=22)
-
-        random_tensor = tf.gather(self.__available_injection_sites, random_index)
-        random_mask = tf.gather(self.__masks, random_index)
-        output = inputs * random_mask + random_tensor
-
-        #tf.print(output)
-        return output
-    '''
+ 
