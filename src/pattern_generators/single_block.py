@@ -3,7 +3,7 @@ from typing import List, Dict, Any, Tuple, Optional
 
 import numpy as np
 
-from pattern_generators.generator_utils import convert_to_linearized_index, random_channels, random_int_from_pct_range
+from src.pattern_generators.generator_utils import convert_to_linearized_index, random_channels, random_int_from_pct_range
 
 logger = logging.getLogger(__name__)
 

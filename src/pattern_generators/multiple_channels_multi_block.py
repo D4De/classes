@@ -3,7 +3,7 @@ from typing import List, Dict, Any, Tuple, Optional
 
 import numpy as np
 
-from pattern_generators.generator_utils import convert_to_linearized_index, random_channels, random_int_from_pct_range
+from src.pattern_generators.generator_utils import convert_to_linearized_index, random_channels, random_int_from_pct_range
 
 logger = logging.getLogger(__name__)
 
@@ -11,7 +11,7 @@ def multiple_channels_multi_block_generator(output_shape : List[int], params : D
     
     num_channels = output_shape[1]
     num_values_per_channel = output_shape[2] * output_shape[3]
-    channels = random_channels(num_channels, params["min_channel_skip"], params["max_channel_skip"], params["max_corrupted_channels"], *params["affected_channels_pct"])
+    channels = random_channels(num_channels, params["min_channel_skip"], params["max_channel_skip"], params["max_corrupted_channels"], *params["affected_channels_pct"], min_channels=2)
     corrupted_positions = []
     avg_block_corruption_pct : Tuple[float, float] = params["avg_block_corruption_pct"]
     block_size : int = params["block_size"]

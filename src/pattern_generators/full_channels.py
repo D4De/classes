@@ -2,7 +2,7 @@ from typing import List, Dict, Any, Tuple, Optional
 
 import numpy as np
 
-from pattern_generators.generator_utils import convert_to_linearized_index, random_channels, random_int_from_pct_range
+from src.pattern_generators.generator_utils import convert_to_linearized_index, random_channels, random_int_from_pct_range
 
 
 def full_channels_generator(output_shape : List[int], params : Dict[str, Any]) -> Optional[List[int]]:
@@ -16,5 +16,4 @@ def full_channels_generator(output_shape : List[int], params : Dict[str, Any]) -
         num_corr_positions = random_int_from_pct_range(num_values_per_channel, *avg_chan_corruption_pct)
         positions = np.random.choice(num_corr_positions, num_values_per_channel)
         corrupted_positions += [(chan, pos) for pos in positions]
-
     return convert_to_linearized_index(corrupted_positions, output_shape)

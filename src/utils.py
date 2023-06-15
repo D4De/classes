@@ -33,6 +33,8 @@ def random_choice(a, size = None, replace = None, p = None):
     This function will also mitigate the risk of raising ValueError numerical errors.
     See np.random.choice for better explanation of the parameters
     """
-    p1 = np.asarray(p).astype('float64')
-    p1 = p1 / np.sum(p1)
-    return np.random.choice(a, size=size, replace=replace, p=p1)
+    if p is not None:
+        p1 = np.asarray(p).astype('float64')
+        p1 = p1 / np.sum(p1)
+        p = p1
+    return np.random.choice(a, size=size, replace=replace, p=p)

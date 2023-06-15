@@ -1,0 +1,820 @@
+{
+   "_rejected_tensors_proportion": 0.0,
+   "_tensor_count": 1223,
+   "_categories_count": 3,
+   "bullet_wake": {
+      "count": 563,
+      "frequency": 0.4603434178250204,
+      "categories_count": 8,
+      "domain_classes": [
+         {
+            "zero": [
+               100.0,
+               100.0
+            ],
+            "count": 229,
+            "frequency": 0.4067495559502664
+         },
+         {
+            "out_of_range": [
+               100.0,
+               100.0
+            ],
+            "count": 171,
+            "frequency": 0.3037300177619893
+         },
+         {
+            "in_range": [
+               100.0,
+               100.0
+            ],
+            "count": 43,
+            "frequency": 0.0763765541740675
+         },
+         {
+            "out_of_range": [
+               87.5,
+               100.0
+            ],
+            "in_range": [
+               0.0,
+               12.5
+            ],
+            "count": 37,
+            "frequency": 0.06571936056838366
+         },
+         {
+            "in_range": [
+               87.5,
+               100.0
+            ],
+            "out_of_range": [
+               0.0,
+               12.5
+            ],
+            "count": 31,
+            "frequency": 0.055062166962699825
+         },
+         {
+            "random": [
+               100.0,
+               100.0
+            ],
+            "count": 52,
+            "values": {
+               "zero": 0.37635467980295567,
+               "out_of_range": 0.4852664576802508,
+               "in_range": 0.13837886251679354
+            },
+            "frequency": 0.09236234458259325
+         }
+      ],
+      "parameters": [
+         {
+            "keys": {
+               "affected_channels_pct": [
+                  20.0,
+                  30.0
+               ]
+            },
+            "stats": {
+               "max_corrupted_channels": 32,
+               "min_channel_skip": 1,
+               "max_channel_skip": 10
+            },
+            "conditional_frequency": 0.31261101243339257,
+            "overall_frequency": 0.1439084219133279,
+            "count": 176
+         },
+         {
+            "keys": {
+               "affected_channels_pct": [
+                  40.0,
+                  50.0
+               ]
+            },
+            "stats": {
+               "max_corrupted_channels": 32,
+               "min_channel_skip": 1,
+               "max_channel_skip": 12
+            },
+            "conditional_frequency": 0.216696269982238,
+            "overall_frequency": 0.09975470155355683,
+            "count": 122
+         },
+         {
+            "keys": {
+               "affected_channels_pct": [
+                  10.0,
+                  20.0
+               ]
+            },
+            "stats": {
+               "max_corrupted_channels": 25,
+               "min_channel_skip": 1,
+               "max_channel_skip": 12
+            },
+            "conditional_frequency": 0.1882770870337478,
+            "overall_frequency": 0.0866721177432543,
+            "count": 106
+         },
+         {
+            "keys": {
+               "affected_channels_pct": [
+                  30.0,
+                  40.0
+               ]
+            },
+            "stats": {
+               "max_corrupted_channels": 32,
+               "min_channel_skip": 1,
+               "max_channel_skip": 11
+            },
+            "conditional_frequency": 0.10657193605683836,
+            "overall_frequency": 0.04905968928863451,
+            "count": 60
+         },
+         {
+            "keys": {
+               "affected_channels_pct": [
+                  90.0,
+                  100.0
+               ]
+            },
+            "stats": {
+               "max_corrupted_channels": 32,
+               "min_channel_skip": 1,
+               "max_channel_skip": 2
+            },
+            "conditional_frequency": 0.056838365896980464,
+            "overall_frequency": 0.02616516762060507,
+            "count": 32
+         },
+         {
+            "keys": {
+               "affected_channels_pct": [
+                  50.0,
+                  60.0
+               ]
+            },
+            "stats": {
+               "max_corrupted_channels": 19,
+               "min_channel_skip": 1,
+               "max_channel_skip": 9
+            },
+            "conditional_frequency": 0.055062166962699825,
+            "overall_frequency": 0.025347506132461162,
+            "count": 31
+         },
+         {
+            "keys": {
+               "affected_channels_pct": [
+                  60.0,
+                  70.0
+               ]
+            },
+            "stats": {
+               "max_corrupted_channels": 32,
+               "min_channel_skip": 1,
+               "max_channel_skip": 4
+            },
+            "conditional_frequency": 0.046181172291296625,
+            "overall_frequency": 0.02125919869174162,
+            "count": 26
+         },
+         {
+            "keys": {
+               "affected_channels_pct": {
+                  "RANDOM": [
+                     [
+                        80.0,
+                        90.0
+                     ],
+                     [
+                        0.0,
+                        10.0
+                     ],
+                     [
+                        70.0,
+                        80.0
+                     ]
+                  ]
+               }
+            },
+            "stats": {
+               "max_corrupted_channels": {
+                  "RANDOM": [
+                     25,
+                     27,
+                     12
+                  ]
+               },
+               "min_channel_skip": 1,
+               "max_channel_skip": {
+                  "RANDOM": [
+                     2,
+                     10,
+                     3
+                  ]
+               }
+            },
+            "conditional_frequency": 0.017761989342806393,
+            "overall_frequency": 0.008176614881439084,
+            "count": 10
+         }
+      ]
+   },
+   "quasi_shattered_channel": {
+      "count": 512,
+      "frequency": 0.4186426819296811,
+      "categories_count": 13,
+      "domain_classes": [
+         {
+            "zero": [
+               100.0,
+               100.0
+            ],
+            "count": 284,
+            "frequency": 0.5546875
+         },
+         {
+            "out_of_range": [
+               100.0,
+               100.0
+            ],
+            "count": 80,
+            "frequency": 0.15625
+         },
+         {
+            "in_range": [
+               100.0,
+               100.0
+            ],
+            "count": 60,
+            "frequency": 0.1171875
+         },
+         {
+            "in_range": [
+               87.5,
+               100.0
+            ],
+            "out_of_range": [
+               0.0,
+               12.5
+            ],
+            "count": 33,
+            "frequency": 0.064453125
+         },
+         {
+            "out_of_range": [
+               87.5,
+               100.0
+            ],
+            "in_range": [
+               0.0,
+               12.5
+            ],
+            "count": 16,
+            "frequency": 0.03125
+         },
+         {
+            "random": [
+               100.0,
+               100.0
+            ],
+            "count": 39,
+            "values": {
+               "zero": 0.5640937678673528,
+               "out_of_range": 0.23762149799885648,
+               "in_range": 0.19828473413379075
+            },
+            "frequency": 0.076171875
+         }
+      ],
+      "parameters": [
+         {
+            "keys": {
+               "avg_span_corruption_pct": [
+                  90.0,
+                  100.0
+               ],
+               "affected_channels_pct": [
+                  60.0,
+                  70.0
+               ]
+            },
+            "stats": {
+               "max_corrupted_channels": 32,
+               "min_channel_skip": 1,
+               "max_channel_skip": 17,
+               "min_span_width": 1,
+               "max_span_width": 4
+            },
+            "conditional_frequency": 0.150390625,
+            "overall_frequency": 0.06295993458708095,
+            "count": 77
+         },
+         {
+            "keys": {
+               "avg_span_corruption_pct": [
+                  90.0,
+                  100.0
+               ],
+               "affected_channels_pct": [
+                  80.0,
+                  90.0
+               ]
+            },
+            "stats": {
+               "max_corrupted_channels": 20,
+               "min_channel_skip": 1,
+               "max_channel_skip": 3,
+               "min_span_width": 1,
+               "max_span_width": 5
+            },
+            "conditional_frequency": 0.123046875,
+            "overall_frequency": 0.05151267375306623,
+            "count": 63
+         },
+         {
+            "keys": {
+               "avg_span_corruption_pct": [
+                  90.0,
+                  100.0
+               ],
+               "affected_channels_pct": [
+                  70.0,
+                  80.0
+               ]
+            },
+            "stats": {
+               "max_corrupted_channels": 19,
+               "min_channel_skip": 1,
+               "max_channel_skip": 5,
+               "min_span_width": 1,
+               "max_span_width": 4
+            },
+            "conditional_frequency": 0.119140625,
+            "overall_frequency": 0.04987735077677841,
+            "count": 61
+         },
+         {
+            "keys": {
+               "avg_span_corruption_pct": [
+                  80.0,
+                  90.0
+               ],
+               "affected_channels_pct": [
+                  90.0,
+                  100.0
+               ]
+            },
+            "stats": {
+               "max_corrupted_channels": 10,
+               "min_channel_skip": 1,
+               "max_channel_skip": 1,
+               "min_span_width": 1,
+               "max_span_width": 6
+            },
+            "conditional_frequency": 0.09765625,
+            "overall_frequency": 0.04088307440719542,
+            "count": 50
+         },
+         {
+            "keys": {
+               "avg_span_corruption_pct": [
+                  90.0,
+                  100.0
+               ],
+               "affected_channels_pct": [
+                  90.0,
+                  100.0
+               ]
+            },
+            "stats": {
+               "max_corrupted_channels": 24,
+               "min_channel_skip": 1,
+               "max_channel_skip": 2,
+               "min_span_width": 1,
+               "max_span_width": 5
+            },
+            "conditional_frequency": 0.091796875,
+            "overall_frequency": 0.038430089942763694,
+            "count": 47
+         },
+         {
+            "keys": {
+               "avg_span_corruption_pct": [
+                  80.0,
+                  90.0
+               ],
+               "affected_channels_pct": [
+                  80.0,
+                  90.0
+               ]
+            },
+            "stats": {
+               "max_corrupted_channels": 9,
+               "min_channel_skip": 1,
+               "max_channel_skip": 2,
+               "min_span_width": 1,
+               "max_span_width": 6
+            },
+            "conditional_frequency": 0.064453125,
+            "overall_frequency": 0.02698282910874898,
+            "count": 33
+         },
+         {
+            "keys": {
+               "avg_span_corruption_pct": [
+                  90.0,
+                  100.0
+               ],
+               "affected_channels_pct": [
+                  50.0,
+                  60.0
+               ]
+            },
+            "stats": {
+               "max_corrupted_channels": 14,
+               "min_channel_skip": 1,
+               "max_channel_skip": 7,
+               "min_span_width": 1,
+               "max_span_width": 3
+            },
+            "conditional_frequency": 0.0625,
+            "overall_frequency": 0.02616516762060507,
+            "count": 32
+         },
+         {
+            "keys": {
+               "avg_span_corruption_pct": [
+                  90.0,
+                  100.0
+               ],
+               "affected_channels_pct": [
+                  40.0,
+                  50.0
+               ]
+            },
+            "stats": {
+               "max_corrupted_channels": 22,
+               "min_channel_skip": 1,
+               "max_channel_skip": 20,
+               "min_span_width": 1,
+               "max_span_width": 2
+            },
+            "conditional_frequency": 0.046875,
+            "overall_frequency": 0.019623875715453803,
+            "count": 24
+         },
+         {
+            "keys": {
+               "avg_span_corruption_pct": [
+                  70.0,
+                  80.0
+               ],
+               "affected_channels_pct": [
+                  90.0,
+                  100.0
+               ]
+            },
+            "stats": {
+               "max_corrupted_channels": 10,
+               "min_channel_skip": 1,
+               "max_channel_skip": 1,
+               "min_span_width": 1,
+               "max_span_width": 6
+            },
+            "conditional_frequency": 0.04296875,
+            "overall_frequency": 0.017988552739165987,
+            "count": 22
+         },
+         {
+            "keys": {
+               "avg_span_corruption_pct": [
+                  90.0,
+                  100.0
+               ],
+               "affected_channels_pct": [
+                  30.0,
+                  40.0
+               ]
+            },
+            "stats": {
+               "max_corrupted_channels": 32,
+               "min_channel_skip": 1,
+               "max_channel_skip": 60,
+               "min_span_width": 1,
+               "max_span_width": 2
+            },
+            "conditional_frequency": 0.0390625,
+            "overall_frequency": 0.016353229762878167,
+            "count": 20
+         },
+         {
+            "keys": {
+               "avg_span_corruption_pct": [
+                  80.0,
+                  90.0
+               ],
+               "affected_channels_pct": [
+                  70.0,
+                  80.0
+               ]
+            },
+            "stats": {
+               "max_corrupted_channels": 8,
+               "min_channel_skip": 1,
+               "max_channel_skip": 3,
+               "min_span_width": 1,
+               "max_span_width": 4
+            },
+            "conditional_frequency": 0.037109375,
+            "overall_frequency": 0.01553556827473426,
+            "count": 19
+         },
+         {
+            "keys": {
+               "avg_span_corruption_pct": [
+                  60.0,
+                  70.0
+               ],
+               "affected_channels_pct": [
+                  90.0,
+                  100.0
+               ]
+            },
+            "stats": {
+               "max_corrupted_channels": 10,
+               "min_channel_skip": 1,
+               "max_channel_skip": 1,
+               "min_span_width": 1,
+               "max_span_width": 6
+            },
+            "conditional_frequency": 0.029296875,
+            "overall_frequency": 0.012264922322158627,
+            "count": 15
+         },
+         {
+            "keys": {
+               "avg_span_corruption_pct": {
+                  "RANDOM": [
+                     [
+                        0.0,
+                        10.0
+                     ],
+                     [
+                        70.0,
+                        80.0
+                     ],
+                     [
+                        90.0,
+                        100.0
+                     ],
+                     [
+                        80.0,
+                        90.0
+                     ],
+                     [
+                        60.0,
+                        70.0
+                     ]
+                  ]
+               },
+               "affected_channels_pct": {
+                  "RANDOM": [
+                     [
+                        20.0,
+                        30.0
+                     ],
+                     [
+                        70.0,
+                        80.0
+                     ],
+                     [
+                        90.0,
+                        100.0
+                     ],
+                     [
+                        10.0,
+                        20.0
+                     ],
+                     [
+                        80.0,
+                        90.0
+                     ],
+                     [
+                        50.0,
+                        60.0
+                     ],
+                     [
+                        60.0,
+                        70.0
+                     ]
+                  ]
+               }
+            },
+            "stats": {
+               "max_corrupted_channels": {
+                  "RANDOM": [
+                     5,
+                     6,
+                     7,
+                     8,
+                     9,
+                     18,
+                     21
+                  ]
+               },
+               "min_channel_skip": 1,
+               "max_channel_skip": {
+                  "RANDOM": [
+                     65,
+                     2,
+                     3,
+                     1,
+                     61
+                  ]
+               },
+               "min_span_width": {
+                  "RANDOM": [
+                     1,
+                     4
+                  ]
+               },
+               "max_span_width": {
+                  "RANDOM": [
+                     1,
+                     4,
+                     5,
+                     6,
+                     3417
+                  ]
+               }
+            },
+            "conditional_frequency": 0.095703125,
+            "overall_frequency": 0.04006541291905151,
+            "count": 49
+         }
+      ]
+   },
+   "shattered_channel": {
+      "count": 148,
+      "frequency": 0.12101390024529844,
+      "categories_count": 2,
+      "domain_classes": [
+         {
+            "out_of_range": [
+               100.0,
+               100.0
+            ],
+            "count": 80,
+            "frequency": 0.5405405405405406
+         },
+         {
+            "out_of_range": [
+               87.5,
+               100.0
+            ],
+            "in_range": [
+               0.0,
+               12.5
+            ],
+            "count": 31,
+            "frequency": 0.20945945945945946
+         },
+         {
+            "random": [
+               100.0,
+               100.0
+            ],
+            "count": 37,
+            "values": {
+               "in_range": 0.05439144003566652,
+               "out_of_range": 0.8524297815425769,
+               "zero": 0.09317877842175658
+            },
+            "frequency": 0.25
+         }
+      ],
+      "parameters": [
+         {
+            "keys": {
+               "avg_span_corruption_pct": [
+                  90.0,
+                  100.0
+               ],
+               "affected_channels_pct": [
+                  90.0,
+                  100.0
+               ]
+            },
+            "stats": {
+               "max_corrupted_channels": 24,
+               "min_channel_skip": 1,
+               "max_channel_skip": 1,
+               "min_span_width": 2,
+               "max_span_width": 6
+            },
+            "conditional_frequency": 0.9054054054054054,
+            "overall_frequency": 0.10956663941128372,
+            "count": 134
+         },
+         {
+            "keys": {
+               "avg_span_corruption_pct": {
+                  "RANDOM": [
+                     [
+                        80.0,
+                        90.0
+                     ],
+                     [
+                        90.0,
+                        100.0
+                     ],
+                     [
+                        70.0,
+                        80.0
+                     ]
+                  ]
+               },
+               "affected_channels_pct": {
+                  "RANDOM": [
+                     [
+                        70.0,
+                        80.0
+                     ],
+                     [
+                        90.0,
+                        100.0
+                     ],
+                     [
+                        80.0,
+                        90.0
+                     ],
+                     [
+                        50.0,
+                        60.0
+                     ],
+                     [
+                        60.0,
+                        70.0
+                     ],
+                     [
+                        40.0,
+                        50.0
+                     ],
+                     [
+                        30.0,
+                        40.0
+                     ]
+                  ]
+               }
+            },
+            "stats": {
+               "max_corrupted_channels": {
+                  "RANDOM": [
+                     5,
+                     6,
+                     8,
+                     9,
+                     11,
+                     16,
+                     17
+                  ]
+               },
+               "min_channel_skip": 1,
+               "max_channel_skip": {
+                  "RANDOM": [
+                     1,
+                     3,
+                     4,
+                     5
+                  ]
+               },
+               "min_span_width": {
+                  "RANDOM": [
+                     2,
+                     4,
+                     5,
+                     6
+                  ]
+               },
+               "max_span_width": {
+                  "RANDOM": [
+                     2,
+                     3,
+                     4,
+                     5,
+                     6
+                  ]
+               }
+            },
+            "conditional_frequency": 0.0945945945945946,
+            "overall_frequency": 0.011447260834014717,
+            "count": 14
+         }
+      ]
+   }
+}

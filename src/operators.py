@@ -37,9 +37,9 @@ class OperatorType(enum.Enum):
         # Switch statement that map each TF's operator type to the model names
         # used in the simulations.
         if self == OperatorType.Conv2D1x1:
-            return "S1_convolution"
+            return "S1_conv"
         elif self == OperatorType.Conv2D3x3:
-            return "S2_convolution"
+            return "S1_conv"
         elif self == OperatorType.Conv2D3x3S2:
             return "S3_convolution"
         elif self == OperatorType.AddV2:
@@ -49,7 +49,7 @@ class OperatorType(enum.Enum):
         elif self == OperatorType.Mul:
             return "S1_mul"
         elif self == OperatorType.FusedBatchNormV3:
-            return "S1_batch_norm"
+            return "S1_batchnorm"
         elif self == OperatorType.Exp:
             return "S1_exp"
         elif self == OperatorType.LeakyRelu:
@@ -61,9 +61,9 @@ class OperatorType(enum.Enum):
         elif self == OperatorType.Add:
             return "S2_add"
         elif self == OperatorType.Conv2D:
-            return "S1_convolution"
+            return "S1_conv"
         elif self == OperatorType.FusedBatchNorm:
-            return "S1_batch_norm"
+            return "S1_batchnorm"
         else:
             raise ValueError("Unable to find a model for this operator: {}".format(self))
 

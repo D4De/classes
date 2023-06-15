@@ -2,7 +2,7 @@ import math
 from typing import Any, Dict, List, Optional
 import numpy as np
 
-from pattern_generators.generator_utils import convert_to_linearized_index, random_channels, random_int_from_pct_range
+from src.pattern_generators.generator_utils import convert_to_linearized_index, random_channels, random_int_from_pct_range
 
 
 def skip_4_generator(output_shape : List[int], params : Dict[str, Any]) -> Optional[List[int]]:
@@ -17,7 +17,9 @@ def skip_4_generator(output_shape : List[int], params : Dict[str, Any]) -> Optio
     max_starting_map_offset = 1 + int(math.floor((num_values_per_channel - remainder - skip_amount * unique_map_indexes) / skip_amount))
     starting_map_offset = np.random.randint(0, max_starting_map_offset)
 
-    candidate_corrupt_positions = [(chan, map_idx + starting_map_offset * skip_amount + remainder) for chan in channels for map_idx in range(unique_map_indexes)]
+    candidate_corrupt_positions = [(chan, (map_idx + starting_map_offset) * skip_amount + remainder) for chan in channels for map_idx in range(unique_map_indexes)]
+    candidate_corrupt_positions = convert_to_linearized_index(candidate_corrupt_positions, output_shape)
     number_of_corrupted_pos = random_int_from_pct_range(len(candidate_corrupt_positions), *params["indexes_corruption_pct"])
     corrupt_positions = np.random.choice(candidate_corrupt_positions, number_of_corrupted_pos)
-    return convert_to_linearized_index(corrupt_positions, output_shape)
+
+    return corrupt_positions

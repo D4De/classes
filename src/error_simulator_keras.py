@@ -10,18 +10,18 @@ def create_injection_sites_layer_simulator(num_requested_injection_sites, layer_
 
         injection_site = InjectableSite(layer_type, '', size)
         try:
-            injection_sites, cardinality, pattern = InjectionSitesGenerator([injection_site],
+            injection_sites = InjectionSitesGenerator([injection_site],
                                                                             models_mode, models_folder)\
                 .generate_random_injection_sites(sites_count)
         except:
             return []
-        return injection_sites, cardinality, pattern
+        return injection_sites
 
     available_injection_sites = []
     masks = []
 
     for _ in range(num_requested_injection_sites):
-        curr_injection_sites, cardinality, pattern = __generate_injection_sites(1, layer_type, layer_output_shape_cf)
+        curr_injection_sites = __generate_injection_sites(1, layer_type, layer_output_shape_cf)
         shape = eval(layer_output_shape_cl.replace('None', '1'))
         curr_inj_nump = np.zeros(shape=shape[1:])
         curr_mask = np.ones(shape=shape[1:])

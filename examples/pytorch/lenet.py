@@ -11,9 +11,8 @@ import sys
 
 CLASSES_MODULE_PATH = "../../"
 WEIGHT_FILE_PATH = "./"
-MODELS_FOLDER = '/models'
-# appending a path
-sys.path.append(CLASSES_MODULE_PATH) #CHANGE THIS LINE
+MODELS_FOLDER = 'models'
+
 
 from src.error_simulator_pytorch import Simulator
 from src.injection_sites_generator import OperatorType
@@ -148,7 +147,7 @@ train_dataset, valid_dataset, train_loader, valid_loader = load_datasets()
 device = 'cpu'
 model = LeNet5(N_CLASSES).to('cpu')
 model.load_state_dict(torch.load(os.path.join(WEIGHT_FILE_PATH,'lenet.pth')))
-model_simulator = LeNet5Simulator(N_CLASSES, OperatorType['Conv2D'], '(None, 6, 28, 28)').to('cpu')
+model_simulator = LeNet5Simulator(N_CLASSES, "conv_gemm", '(None, 6, 28, 28)').to('cpu')
 
 with torch.no_grad():
     for name, _ in model.named_parameters():
@@ -178,7 +177,7 @@ for i in range(RUNS):
     pred = output_corr.argmax(dim=1).item()
     pred_vanilla = output_vanilla.argmax(dim=1).item()
 
-    #print(f" Pred vs Label => ({pred},{label})")
+    print(f" Pred vs Label => ({pred},{label})")
     if pred == label:
         correct += 1
     
