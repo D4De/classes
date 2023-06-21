@@ -17,7 +17,7 @@ def shattered_channel_generator(output_shape : List[int], params : Dict[str, Any
 
     for channel in channels:
         span_width = clamp(np.random.randint(params["min_span_width"], params["max_span_width"] + 1), 1, num_values_per_channel)
-        span_begin = np.random.randint(max(0, common_position - span_width), min(num_values_per_channel - 1, num_values_per_channel - span_width))
+        span_begin = np.random.randint(max(0, common_position - span_width), max(min(num_values_per_channel - 1, num_values_per_channel - span_width), 1))
         channel_num_corr_pos = random_int_from_pct_range(span_width, *params["avg_span_corruption_pct"])
         channel_corr_pos = np.random.choice(span_width, channel_num_corr_pos, replace=False)
         for pos in channel_corr_pos:

@@ -2,14 +2,14 @@ from __future__ import annotations
 
 import os
 import json
-from typing import Any, Dict, Iterable, List, Literal, Optional, Set, Tuple
+from typing import Any, Dict, Iterable, List, Literal, Optional, Tuple
 import numpy as np
-import traceback
 import struct
 from src.pattern_generators import generator_functions
 
 from src.utils import random_choice, unpack_table
 from src.loggers import get_logger
+from src.visualize import visualize
 
 logger = get_logger('InjectionSiteGenerator')
 
@@ -140,10 +140,11 @@ class InjectionSite(object):
     It can be iterated to get pairs of indexes and values.
     """
 
-    def __init__(self, operator_name):
+    def __init__(self, operator_name, output_shape):
         self.__operator_name = operator_name
         self.__indexes : List[List[int]] = []
         self.__values : List[InjectionValue] = []
+        self.__output_shape = output_shape
 
     def add_injection(self, index, value):
         self.__indexes.append(index)
@@ -180,16 +181,27 @@ class InjectionSite(object):
             json_representation[str(index)] = str(value)
         json_representation["operator_name"] = self.__operator_name
         return json_representation
+    
+    def visualize(self, output_path : str):
+        tensor_diff = np.zeros(self.__output_shape)
+        faulty_channels = set()
+        for i in range(len(self)):
+            n, c, h, w = self.__indexes[i]
+            faulty_channels.add(c)
+            tensor_diff[n, c, h, w] = self.__values[i].value_type
+        visualize(tensor_diff, faulty_channels, 'NCHW', output_path, save=True, invalidate=True)
 
 MAX_FAILED_ATTEMPTS_IN_A_ROW = 20
 
 
 class InjectionSitesGenerator(object):
-    def __init__(self, injectable_sites, models_folder: str = '/models'):
+    def __init__(self, injectable_sites, models_folder: str = '/models', fixed_spatial_class : Optional[str] = None, fixed_domain_class : Optional[dict] = None):
         self.__injectable_sites = injectable_sites
         self.__models = self.__load_models(models_folder)
+        self.__fixed_spatial_class = fixed_spatial_class
+        self.__fixed_domain_class = fixed_domain_class
 
-    def generate_random_injection_sites(self, size: int) -> List[InjectionSite]:
+    def generate_random_injection_sites(self, size: int, fixed_spatial_class : Optional[str] = None, fixed_domain_class : Optional[dict] = None) -> List[InjectionSite]:
 
         injectables_site_indexes = np.random.choice(len(self.__injectable_sites), size=size)
         injection_sites = []
@@ -197,21 +209,32 @@ class InjectionSitesGenerator(object):
 
             for parameter_attempt in range(MAX_FAILED_ATTEMPTS_IN_A_ROW):
                 injectable_site = self.__injectable_sites[index]
-                operator_name = injectable_site.operator_name
-                injection_site = InjectionSite(operator_name)
-                spatial_class = self.__select_spatial_class(operator_name)
-                domain_class = self.__select_domain_class(operator_name, spatial_class)
+                operator_name = injectable_site.operator_name  
+                output_shape = eval(injectable_site.size)
+                injection_site = InjectionSite(operator_name, output_shape)
+                if fixed_spatial_class is not None:
+                    spatial_class = fixed_spatial_class
+                elif self.__fixed_spatial_class is not None:
+                    spatial_class = self.__fixed_spatial_class
+                else:
+                    spatial_class = self.__select_spatial_class(operator_name)
+                if fixed_domain_class is not None:
+                    spatial_class = fixed_domain_class
+                if self.__fixed_domain_class is not None:
+                    domain_class = self.__fixed_domain_class
+                else:
+                    domain_class = self.__select_domain_class(operator_name, spatial_class)
                 spatial_parameters = self.__select_spatial_parameters(operator_name, spatial_class)
-                spatial_positions = self.__generate_spatial_pattern(spatial_class, eval(injectable_site.size), spatial_parameters)
-                channel_count = len(set(sp_pos[1] for sp_pos in spatial_positions))
-                logger.info(f"Injection details. Spatial: {spatial_class} {spatial_parameters} Domain: {domain_class}. Cardinality: {len(spatial_positions)} Channel Count: {channel_count}")
-                logger.debug(spatial_positions)
+                spatial_positions = self.__generate_spatial_pattern(spatial_class, output_shape, spatial_parameters)
                 if spatial_positions is None:
                     logger.warn(f"Injection attempt #{parameter_attempt + 1} failed using {spatial_class} {spatial_parameters}, retrying again with the same parameters")
                     if parameter_attempt > MAX_FAILED_ATTEMPTS_IN_A_ROW:
-                        raise RuntimeError("Failed too much")
+                        raise RuntimeError("Failed too many times in a row")
                     else:
                         continue
+                channel_count = len(set(sp_pos[1] for sp_pos in spatial_positions))
+                logger.info(f"Injection details. Spatial: {spatial_class} {spatial_parameters} Domain: {domain_class}. Cardinality: {len(spatial_positions)} Channel Count: {channel_count}")
+                logger.debug(spatial_positions)
                 corrupted_values = self.__generate_domains(domain_class, len(spatial_positions))
                 for idx, value in zip(spatial_positions, corrupted_values):
                     injection_site.add_injection(idx, value)                
@@ -220,6 +243,8 @@ class InjectionSitesGenerator(object):
         return injection_sites
     
     def __select_spatial_class(self, operator_name : str) -> str:
+        if operator_name not in self.__models:
+            raise KeyError(f"Operator {operator_name} does not exists. Check if a file name {operator_name}.json is included in the selected model folder.")
         sp_classes, sp_class_description = unpack_table(self.__models[operator_name])
         sp_classes_freqs = [desc["frequency"] for desc in sp_class_description]
         return random_choice(sp_classes, p=sp_classes_freqs)
@@ -244,7 +269,7 @@ class InjectionSitesGenerator(object):
                 return None 
             return [np.unravel_index(rp, shape=output_shape) for rp in raveled_positions]
         else:
-            raise NotImplementedError(f"{spatial_class} generator is not implemented")
+            raise NotImplementedError(f"{spatial_class} generator is not implemented. Check if it was included in src/pattern_generators/__init__.py dictionary")
         
     def __generate_domains(self, domain_class : str, cardinality : int):
         def inj_value_from_name(name : str):
@@ -269,8 +294,10 @@ class InjectionSitesGenerator(object):
             return [inj_value_from_name(val_class[vc_id]) for vc_id in random_val_classes]
 
         value_frequencies = dict(domain_class)
-        del value_frequencies["count"]
-        del value_frequencies["frequency"]
+        if "count" in value_frequencies:
+            del value_frequencies["count"]
+        if "frequency" in value_frequencies:    
+            del value_frequencies["frequency"]
         value_classes, freq_ranges = unpack_table(value_frequencies)
         if len(value_classes) == 1:
           return [inj_value_from_name(value_classes[0]) for i in range(cardinality)]
@@ -338,7 +365,6 @@ class InjectionSitesGenerator(object):
     
     def __load_models(self, models_folder):
         spatial_models : Dict[str, Any] = {}
-
         available_operators = [file[:-5] for file in os.listdir(models_folder) if file.endswith(".json")]
 
         for model_operator_name in available_operators:

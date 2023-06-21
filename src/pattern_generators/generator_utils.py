@@ -21,7 +21,7 @@ def random_list_with_gap_constraints(length : int, max_number : int, min_gap : i
     gap_list = [min_gap] * (length - 1)
     head = 0
     tail = min_gap * (length - 1)
-
+    print(f'{length=} {max_number=} {min_gap=} {max_gap=}')
     while tail < max_number:
         incrementable_gaps = [i for i, gap in enumerate(gap_list) if gap < max_gap]
         if len(incrementable_gaps) == 0:
@@ -29,6 +29,7 @@ def random_list_with_gap_constraints(length : int, max_number : int, min_gap : i
         random_idx = np.random.choice(incrementable_gaps)
         gap_list[random_idx] += 1
         tail += 1
+        print(f'{gap_list=}')
     
     result_list = [head]
     accumulator = head
@@ -53,9 +54,7 @@ def random_channels(num_channels : int, min_channel_skip : int, max_channel_skip
         starting_channel_offset = np.random.randint(0, max_starting_channel)
     else:
         starting_channel_offset = 0
-
-    channels = random_list_with_gap_constraints(num_corrupted_channels, min(max_span, num_channels), min_channel_skip, max_channel_skip)
-
+    channels = random_list_with_gap_constraints(num_corrupted_channels, min(max_span, num_channels - starting_channel_offset - 1), min_channel_skip, max_channel_skip)
     return [idx + starting_channel_offset for idx in channels if (idx + starting_channel_offset) < num_channels]
 
 

@@ -1,3 +1,4 @@
+from typing import Optional
 import tensorflow as tf
 import numpy as np
 from .injection_sites_generator import InjectableSite, InjectionSitesGenerator, InjectionValue
@@ -9,12 +10,12 @@ from src.loggers import get_logger
 logger = get_logger("ErrorSimulator")
 
 def create_injection_sites_layer_simulator(num_requested_injection_sites : int, layer_type : str, layer_output_shape_cf : str,
-                                           layer_output_shape_cl : str, models_folder : str, range_min : float = None, range_max : float = None):
+                                           layer_output_shape_cl : str, models_folder : str, range_min : float = None, range_max : float = None, fixed_spatial_class : Optional[str] = None, fixed_domain_class : Optional[dict] = None):
     def __generate_injection_sites(sites_count : int, layer_type : str, size : int):
 
         injection_site = InjectableSite(layer_type, size)
 
-        injection_sites = InjectionSitesGenerator([injection_site], models_folder).generate_random_injection_sites(sites_count)
+        injection_sites = InjectionSitesGenerator([injection_site], models_folder, fixed_spatial_class, fixed_domain_class).generate_random_injection_sites(sites_count)
 
         return injection_sites
 
@@ -39,7 +40,7 @@ def create_injection_sites_layer_simulator(num_requested_injection_sites : int, 
             for idx, value in curr_injection_sites[0].get_indexes_values():
                 channel_last_idx = (idx[0], idx[2], idx[3], idx[1])
                 curr_mask[channel_last_idx[1:]] = 0
-                curr_inj_nump[channel_last_idx[1:]] += value.get_value()
+                curr_inj_nump[channel_last_idx[1:]] += value.get_value(range_min, range_max)
 
             available_injection_sites.append(curr_inj_nump)
             masks.append(curr_mask)

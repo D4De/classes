@@ -1,5 +1,7 @@
 import numpy as np
 from datetime import datetime
+
+from tqdm.gui import tqdm_gui
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -11,11 +13,12 @@ import sys
 
 CLASSES_MODULE_PATH = "../../"
 WEIGHT_FILE_PATH = "./"
-MODELS_FOLDER = 'models'
+MODELS_FOLDER = CLASSES_MODULE_PATH + 'models'
 
+# appending a path
+sys.path.append(CLASSES_MODULE_PATH) #CHANGE THIS LINE
 
 from src.error_simulator_pytorch import Simulator
-from src.injection_sites_generator import OperatorType
 
 """
 This is a simple example on how to use the error simulator with PyTorch. The simulator has been developed as a custom
@@ -81,11 +84,11 @@ class LeNet5Simulator(nn.Module):
     A standard LeNet5 model
     """
 
-    def __init__(self, n_classes, operator_type, output_shape):
+    def __init__(self, n_classes, operator_type, output_shape, fixed_spatial_class = None, fixed_domain_class = None):
         super(LeNet5Simulator, self).__init__()
         self.conv1 = nn.Conv2d(in_channels=1, out_channels=6, kernel_size=5, stride=1)
-        self.simulator = Simulator(operator_type, output_shape, MODELS_FOLDER)
         self.tanh1 = nn.Tanh()
+        self.simulator = Simulator(operator_type, output_shape, MODELS_FOLDER, fixed_spatial_class, fixed_domain_class)
         self.pool1 = nn.AvgPool2d(kernel_size=2)
         self.conv2 = nn.Conv2d(in_channels=6, out_channels=16, kernel_size=5, stride=1)
         self.tanh2 = nn.Tanh()
@@ -147,7 +150,11 @@ train_dataset, valid_dataset, train_loader, valid_loader = load_datasets()
 device = 'cpu'
 model = LeNet5(N_CLASSES).to('cpu')
 model.load_state_dict(torch.load(os.path.join(WEIGHT_FILE_PATH,'lenet.pth')))
-model_simulator = LeNet5Simulator(N_CLASSES, "conv_gemm", '(None, 6, 28, 28)').to('cpu')
+model_simulator = LeNet5Simulator(N_CLASSES, "tanh", '(None, 6, 28, 28)', fixed_domain_class={            
+    "out_of_range": [
+               100.0,
+               100.0
+            ]}).to('cpu')
 
 with torch.no_grad():
     for name, _ in model.named_parameters():
@@ -167,23 +174,26 @@ correct = 0
 fault_robust_runs = 0
 
 # Select a single image from the test dataset
-RUNS = 100
-for i in range(RUNS):
-    img, label = test_dataset[i]
+N_IMAGES = 100
+RUN_PER_IMAGE = 50
+for image_idx in tqdm_gui(range(N_IMAGES)):
+    img, label = test_dataset[image_idx]
     img = img.unsqueeze(0)
-    output_corr = model_simulator(img)[0]
     output_vanilla = model(img)[0]
-
-    pred = output_corr.argmax(dim=1).item()
     pred_vanilla = output_vanilla.argmax(dim=1).item()
+    for run in range(RUN_PER_IMAGE):
 
-    print(f" Pred vs Label => ({pred},{label})")
-    if pred == label:
-        correct += 1
-    
-    if pred == pred_vanilla:
-        fault_robust_runs+=1
+        output_corr = model_simulator(img)[0]
+        pred = output_corr.argmax(dim=1).item()
+
+
+        print(f" Pred vs Label => ({pred},{label})")
+        if pred == label:
+            correct += 1
+        
+        if pred == pred_vanilla:
+            fault_robust_runs+=1
 
 print(f"----------------------------------")
-print(f"Correctly predicted images: {correct} of {RUNS}")
-print(f"Predctions not changed w.r.t Vanilla model: {fault_robust_runs} of {RUNS}")
+print(f"Correctly predicted images: {correct} of {N_IMAGES * RUN_PER_IMAGE}")
+print(f"Predctions not changed w.r.t Vanilla model: {fault_robust_runs} of {N_IMAGES * RUN_PER_IMAGE}")

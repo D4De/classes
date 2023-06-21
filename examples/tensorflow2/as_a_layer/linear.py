@@ -90,7 +90,7 @@ def load_data():
 NUM_INJECTIONS = 100
 NUM = 42
 
-layer_type = OperatorType['Conv2D']
+layer_type = 'conv_gemm'
 layer_output_shape_cf = '(None, 16, 27, 27)'
 layer_output_shape_cl = '(None, 27, 27, 16)'
 

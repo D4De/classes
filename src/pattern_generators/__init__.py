@@ -11,7 +11,7 @@ from src.pattern_generators.same_row import same_row_generator
 from src.pattern_generators.single_block import single_block_generator
 from src.pattern_generators.single_channel_random import single_channel_random_generator
 from src.pattern_generators.skip_4 import skip_4_generator
-
+from src.pattern_generators.multiple_channels_uncategorized import multiple_channels_uncategorized_generator
 
 
 generator_functions : Dict[str, Callable[[List[int], Dict[str, Any]], Optional[List[int]]]] = {
@@ -19,7 +19,9 @@ generator_functions : Dict[str, Callable[[List[int], Dict[str, Any]], Optional[L
     "multi_channel_block": multiple_channels_multi_block_generator,
     "same_column": same_row_generator,
     "shattered_channel": shattered_channel_generator,
-    "single_channel_alternate_blocks": single_channel_alternated_block_generator,
+    "quasi_shattered_channel": shattered_channel_generator,
+    "single_channel_alternated_blocks": single_channel_alternated_block_generator,
+    "multiple_channels_uncategorized": multiple_channels_uncategorized_generator,
     "single": single_generator,
     "full_channels": full_channels_generator,
     "rectangles": rectangles_generator,
