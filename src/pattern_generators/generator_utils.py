@@ -21,7 +21,6 @@ def random_list_with_gap_constraints(length : int, max_number : int, min_gap : i
     gap_list = [min_gap] * (length - 1)
     head = 0
     tail = min_gap * (length - 1)
-    print(f'{length=} {max_number=} {min_gap=} {max_gap=}')
     while tail < max_number:
         incrementable_gaps = [i for i, gap in enumerate(gap_list) if gap < max_gap]
         if len(incrementable_gaps) == 0:
@@ -29,8 +28,6 @@ def random_list_with_gap_constraints(length : int, max_number : int, min_gap : i
         random_idx = np.random.choice(incrementable_gaps)
         gap_list[random_idx] += 1
         tail += 1
-        print(f'{gap_list=}')
-    
     result_list = [head]
     accumulator = head
     for gap in gap_list:

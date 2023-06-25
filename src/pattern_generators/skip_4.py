@@ -14,7 +14,7 @@ def skip_4_generator(output_shape : List[int], params : Dict[str, Any]) -> Optio
     unique_map_indexes = params["unique_channel_indexes"]
 
     remainder = np.random.randint(0, skip_amount)
-    max_starting_map_offset = 1 + int(math.floor((num_values_per_channel - remainder - skip_amount * unique_map_indexes) / skip_amount))
+    max_starting_map_offset = 1 + max(int(math.floor((num_values_per_channel - remainder - skip_amount * unique_map_indexes) / skip_amount)), 0)
     starting_map_offset = np.random.randint(0, max_starting_map_offset)
 
     candidate_corrupt_positions = [(chan, (map_idx + starting_map_offset) * skip_amount + remainder) for chan in channels for map_idx in range(unique_map_indexes)]

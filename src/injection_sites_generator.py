@@ -205,41 +205,50 @@ class InjectionSitesGenerator(object):
 
         injectables_site_indexes = np.random.choice(len(self.__injectable_sites), size=size)
         injection_sites = []
-        for index in injectables_site_indexes:
 
-            for parameter_attempt in range(MAX_FAILED_ATTEMPTS_IN_A_ROW):
-                injectable_site = self.__injectable_sites[index]
-                operator_name = injectable_site.operator_name  
-                output_shape = eval(injectable_site.size)
-                injection_site = InjectionSite(operator_name, output_shape)
-                if fixed_spatial_class is not None:
-                    spatial_class = fixed_spatial_class
-                elif self.__fixed_spatial_class is not None:
-                    spatial_class = self.__fixed_spatial_class
-                else:
-                    spatial_class = self.__select_spatial_class(operator_name)
-                if fixed_domain_class is not None:
-                    spatial_class = fixed_domain_class
-                if self.__fixed_domain_class is not None:
-                    domain_class = self.__fixed_domain_class
-                else:
-                    domain_class = self.__select_domain_class(operator_name, spatial_class)
-                spatial_parameters = self.__select_spatial_parameters(operator_name, spatial_class)
-                spatial_positions = self.__generate_spatial_pattern(spatial_class, output_shape, spatial_parameters)
-                if spatial_positions is None:
-                    logger.warn(f"Injection attempt #{parameter_attempt + 1} failed using {spatial_class} {spatial_parameters}, retrying again with the same parameters")
-                    if parameter_attempt > MAX_FAILED_ATTEMPTS_IN_A_ROW:
-                        raise RuntimeError("Failed too many times in a row")
+        for index in injectables_site_indexes:
+            extracted = False
+            attempts = 0
+            while not extracted and attempts < MAX_FAILED_ATTEMPTS_IN_A_ROW: 
+                try:
+                    injectable_site = self.__injectable_sites[index]
+                    operator_name = injectable_site.operator_name  
+                    output_shape = eval(injectable_site.size)
+                    injection_site = InjectionSite(operator_name, output_shape)
+                    if fixed_spatial_class is not None:
+                        spatial_class = fixed_spatial_class
+                    elif self.__fixed_spatial_class is not None:
+                        spatial_class = self.__fixed_spatial_class
                     else:
-                        continue
-                channel_count = len(set(sp_pos[1] for sp_pos in spatial_positions))
-                logger.info(f"Injection details. Spatial: {spatial_class} {spatial_parameters} Domain: {domain_class}. Cardinality: {len(spatial_positions)} Channel Count: {channel_count}")
-                logger.debug(spatial_positions)
-                corrupted_values = self.__generate_domains(domain_class, len(spatial_positions))
-                for idx, value in zip(spatial_positions, corrupted_values):
-                    injection_site.add_injection(idx, value)                
-                injection_sites.append(injection_site)
-                break
+                        spatial_class = self.__select_spatial_class(operator_name)
+                    if fixed_domain_class is not None:
+                        spatial_class = fixed_domain_class
+                    if self.__fixed_domain_class is not None:
+                        domain_class = self.__fixed_domain_class
+                    else:
+                        domain_class = self.__select_domain_class(operator_name, spatial_class)
+                    spatial_parameters = self.__select_spatial_parameters(operator_name, spatial_class)
+                    spatial_positions = self.__generate_spatial_pattern(spatial_class, output_shape, spatial_parameters)
+                    if spatial_positions is None:
+                        logger.warn(f"Injection attempt #{attempts + 1} failed. Params {spatial_class=} {spatial_parameters=} {output_shape=}")
+                        raise RuntimeError("Injection attempt failed")
+
+                    channel_count = len(set(sp_pos[1] for sp_pos in spatial_positions))
+                    logger.info(f"Injection details. Spatial: {spatial_class} {spatial_parameters} Domain: {domain_class}. Cardinality: {len(spatial_positions)} Channel Count: {channel_count}")
+                    logger.debug(spatial_positions)
+                    corrupted_values = self.__generate_domains(domain_class, len(spatial_positions))
+                    for idx, value in zip(spatial_positions, corrupted_values):
+                        injection_site.add_injection(idx, value)                
+                    injection_sites.append(injection_site)
+                    extracted = True
+                except Exception as e:
+                    logger.error(f"Failed to inject. Attempts in a row: {attempts + 1}")
+                    logger.error(e, exc_info=True)
+                finally:
+                    attempts += 1
+            if attempts == MAX_FAILED_ATTEMPTS_IN_A_ROW:
+                logger.error(f"Injection failed {MAX_FAILED_ATTEMPTS_IN_A_ROW}. Aborting")
+                raise RuntimeError(f"Failed to inject {MAX_FAILED_ATTEMPTS_IN_A_ROW} in a row")
         return injection_sites
     
     def __select_spatial_class(self, operator_name : str) -> str:
