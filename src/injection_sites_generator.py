@@ -230,7 +230,7 @@ class InjectionSitesGenerator(object):
                     spatial_parameters = self.__select_spatial_parameters(operator_name, spatial_class)
                     spatial_positions = self.__generate_spatial_pattern(spatial_class, output_shape, spatial_parameters)
                     if spatial_positions is None:
-                        logger.warn(f"Injection attempt #{attempts + 1} failed. Params {spatial_class=} {spatial_parameters=} {output_shape=}")
+                        logger.error(f"Injection attempt #{attempts + 1} failed. Params {spatial_class=} {spatial_parameters=} {output_shape=}")
                         raise RuntimeError("Injection attempt failed")
 
                     channel_count = len(set(sp_pos[1] for sp_pos in spatial_positions))

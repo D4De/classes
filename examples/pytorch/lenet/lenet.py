@@ -8,7 +8,7 @@ from torchvision import datasets, transforms
 import os
 import sys 
 
-CLASSES_MODULE_PATH = "../../"
+CLASSES_MODULE_PATH = "../../../"
 WEIGHT_FILE_PATH = "./"
 MODELS_FOLDER = CLASSES_MODULE_PATH + 'models'
 
@@ -61,13 +61,21 @@ class LeNet5(nn.Module):
 
     def forward(self, x):
         conv1 = self.conv1(x)
+        print(conv1.shape)
         x = self.tanh1(conv1)
+        print(x.shape)
         x = self.pool1(x)
+        print(x.shape)
         x = self.conv2(x)
+        print(x.shape)
         x = self.tanh2(x)
+        print(x.shape)
         x = self.pool2(x)
+        print(x.shape)
         x = self.conv3(x)
+        print(x.shape)
         x = self.tanh3(x)
+        print(x.shape)
         x = torch.flatten(x, 1)
         x = self.linear1(x)
         x = self.tanh4(x)
