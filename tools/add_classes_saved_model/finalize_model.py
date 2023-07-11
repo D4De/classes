@@ -20,10 +20,12 @@ with open('model_description.json', "r") as f:
 masks = np.load('masks.npy')
 injections = np.load('injections.npy')
 
-new_config = new_config.replace('INJ_SITES', injections.tolist())
-new_config = new_config.replace('MASKS', injections.tolist())
-new_config = new_config.replace('NUM_INJECTION_SITES', data['injection_sites'])
-
+for layer in new_config['config']['layers']:
+	if layer['class_name'] == 'ErrorSimulator':
+		layer['config']['INJ_SITES'] = injections.tolist()
+		layer['config']['MASKS'] = masks.tolist()
+		layer['config']['NUM_INJECTION_SITES'] = data['injection_sites']
+	
 # Convert the modified model configuration back to JSON format
 modified_config_json = json.dumps(new_config)
 

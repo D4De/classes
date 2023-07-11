@@ -90,9 +90,9 @@ We need to add the description of our custom layer which will always be the foll
         "name": "simulator",
         "trainable": false,
         "dtype": "float32",
-        "available_injection_sites": INJ_SITES,
-        "masks": MASKS,
-        "num_inj_sites": NUM_INJECTION_SITES
+        "available_injection_sites": "INJ_SITES",
+        "masks": "MASKS",
+        "num_inj_sites": "NUM_INJECTION_SITES"
     },
     "name": "simulator",
     "inbound_nodes":

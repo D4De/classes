@@ -7,7 +7,7 @@ with open('config.json', 'r') as f:
 	
 
 available_injection_sites, masks = create_injection_sites_layer_simulator(
-	num_requested_injection_sites = data['injection_sites'],
+	num_requested_injection_sites = data['injection_sites'] * 5,
 	layer_type = data['layer_type'], 
     layer_output_shape_cf = data['layer_output_shape_cf'],
     layer_output_shape_cl = data['layer_output_shape_cl'], 

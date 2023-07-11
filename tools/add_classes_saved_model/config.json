@@ -1,6 +1,7 @@
 {
     "model": "path/to/weights.h5",
-    "num_requested_injection_sites": "num injections requested",
+    "new_model": "path/to/new_model/",
+    "injection_sites": "num injections requested",
     "layer_type": "name of layer type",
     "layer_output_shape_cf": "output shape channel last",
     "layer_output_shape_cl": "output shape channel first",
