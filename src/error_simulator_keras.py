@@ -9,8 +9,17 @@ from src.loggers import get_logger
 
 logger = get_logger("ErrorSimulator")
 
-def create_injection_sites_layer_simulator(num_requested_injection_sites : int, layer_type : str, layer_output_shape_cf : str,
-                                           layer_output_shape_cl : str, models_folder : str, range_min : float = None, range_max : float = None, fixed_spatial_class : Optional[str] = None, fixed_domain_class : Optional[dict] = None):
+def create_injection_sites_layer_simulator(
+        num_requested_injection_sites : int, 
+        layer_type : str, 
+        layer_output_shape_cf : str,
+        layer_output_shape_cl : str, 
+        models_folder : str, 
+        range_min : float = None, 
+        range_max : float = None, 
+        fixed_spatial_class : Optional[str] = None, 
+        fixed_domain_class : Optional[dict] = None):
+    
     def __generate_injection_sites(sites_count : int, layer_type : str, size : int):
 
         injection_site = InjectableSite(layer_type, size)
