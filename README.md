@@ -130,18 +130,23 @@ For each occourring pattern the error models contains other two sub characteriza
     - Maxium number of faults that are corrupted
     - Interval (or skip) between two corrupted values in the linearized tensor.
     Each spatial class has its own set of parameters.
-* Domain models, that models how the values are changed by the faults. To derive the domains models each corrupted value is first put in one of four Value Classes:
-    - In Range: The corrupted value remains inside the operating range of the golden tensor (i.e. ``[min(golden_tensor), max(golden_tensor)]``), but it is not exactly zero.
-    - Out of Range: The corrupted value falls of the operating range of the golden tensor.
-    - NaN: The value is NaN, or infinity
-    - Zero: The value is exactly zero.
-Then the tensor is classified in a Domain class that can be:
-    - Single Value Class: All errors belong to the same value class
-    - Double Value Class: All errors belong to only two different value classes. In this case the proportion of values is stored in the class.
-    - Random. The tensor is not on one of these two classes.
+* Domain models, that models the distribution of the corrupted values.
 
-These error models are saved in the ```models``` folder, with one different json file per operator. CLASSES will read from these models and will generate error patters using the models specified in the json. 
-For a given operator the json file contains the relative frequency of each spatial pattern, and for each spatial pattern, there are the relative frequency for each configuration of spatial parameters and domain parameters. The injection site generator will pick at random a spatial pattern (with a probability equal to its relative frequency) and a configuration of spatial and domain parameters. The generator then picks the corrupted locations in the tensor by calling the pattern generator function corresponding to the picked spatial pattern (the code pattern generator functions are in ```src/pattern_generators```). For each corrupted location a value is picked based on the domain parameters distribution, and then the corrupted tensor is inserted in the network by the error simulator module described below.
+To derive the domains models each corrupted value is first put in one of four Value Classes:
+- In Range: The corrupted value remains inside the operating range of the golden tensor (i.e. ``[min(golden_tensor), max(golden_tensor)]``), but it is not exactly zero.
+- Out of Range: The corrupted value falls of the operating range of the golden tensor.
+- NaN: The value is NaN, or infinity
+- Zero: The value is exactly zero.
+ 
+Then the tensor is classified in a Domain class that is one of these:
+- Single Value Class: All errors belong to the same value class
+- Double Value Class: All errors belong to only two different value classes. In this case the proportion of values is stored in the class.
+- Random. The tensor is not on one of these two classes.
+
+The error models are obtained by first performing a fault injection at the architectural level (for example using NVBitFI) and then using the CNN error classifier tool (available in this ![https://github.com/D4De/cnn-error-classifier](repository) ) that analyzes the fault injection results and creates the models. The models can be found in this repo in the ```models``` folder, that contains one different model json file per operator. CLASSES will read from these models and will generate error patters using the models specified in the json. 
+For a given operator the json file contains the relative frequency of each spatial pattern, and for each spatial pattern, there are the relative frequency for each configuration of spatial parameters and domain parameters. 
+
+The injection site generator will pick at random a spatial pattern (with a probability equal to its relative frequency) and a configuration of spatial and domain parameters. The generator then picks the corrupted locations in the tensor by calling the pattern generator function corresponding to the picked spatial pattern (the code pattern generator functions are in ```src/pattern_generators```). For each corrupted location a value is picked based on the domain parameters distribution, and then the corrupted tensor is inserted in the network by the error simulator module described below.
 
 ### Error Simulator
 
