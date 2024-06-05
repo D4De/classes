@@ -1,3 +1,9 @@
+"""
+Deprecated.
+
+See classes-pytorch repository
+"""
+
 from .injection_sites_generator import *
 import torch.nn as nn
 import torch
@@ -7,6 +13,11 @@ from src.loggers import get_logger
 logger = get_logger("ErrorSimulator")
 
 class Simulator(nn.Module):
+    """
+    Deprecated.
+    
+    See classes-pytorch repository
+    """
     def __init__(self, layer_type, size, models_folder, fixed_spatial_class = None, fixed_domain_class = None):
         super().__init__()
         self.sites_count = 1

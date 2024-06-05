@@ -27,7 +27,7 @@ If you use Classes in your research, we would appreciate a citation to:
 
 ## Copyright & License
 
-Copyright (C) 2023 Politecnico di Milano.
+Copyright (C) 2024 Politecnico di Milano.
 
 This framework is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
@@ -36,14 +36,7 @@ This framework is distributed in the hope that it will be useful, but WITHOUT AN
 Neither the name of Politecnico di Milano nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
 
 ## Dependencies 
-The following libraries are required in order to correctly use the framework. <br>
-N.B. This framework has been developed for TensorFlow1, TensorFlow2 and PyTorch. If you want to use it with one of the frameworks you don't need to install also the others.
-
-1. Python3 
-2. Numpy package
-3. TensorFlow 2.10 or lower
-4. TensorFlow 1
-5. PyTorch
+You need Tensorflow 2 and Numpy to use this library.
 
 ## Installation 
 
@@ -54,7 +47,7 @@ git clone https://github.com/D4De/CLASSES.git
 and import the `src` folder.
 
 ## How it works
-To fully understand how Classes works we strongly suggest to read our paper _Fast and Accurate Error Simulation for CNNs Against Soft Errors_.
+To fully understand how Classes works we strongly suggest to read our paper _Fast and Accurate Error Simulation for CNNs Against Soft Errors_, that explains the philosophy of the CLASSES framework.
 Nonetheless, we want to provide a small description of its operation. 
 The following image provides a high level representation of the whole framework, we executed an error injection campaign
 at GPU level using NVBitFI for each of the [supported layers](#operators-supported) in order to create a database of error models.
@@ -76,8 +69,11 @@ output of each layer.
 Due to how TensorFlow2 works a layer could contain both an operator and an activation function, to target each part the 
 user of Classes must execute two distinct campaign selecting different [OperatorType](src/operators.py) accordingly to
 the components of the target layer.
+
+
+
 ## Usage
-The framework is composed by two distinct modules, the injection sites generator and the error simulator. The first one, as the name suggests, is responsible for the creaton of the injection sites and it is common among all the different implementations of the error simulator. The error simulator itself has been implemented in four different ways in order to work with both TensorFlow (1 and 2) and PyTorch. We provide here an high level description of both modules, a more precise description with examples can be found in the `example` folder. 
+The framework is composed by two distinct modules, the injection sites generator and the error simulator. The first one, as the name suggests, is responsible for the creaton of the injection sites and it is common among all the different implementations of the error simulator. The error simulator itself has been implemented in four different ways in order to work with both TensorFlow (1 and 2) and PyTorch. Note that the PyTorch version and the Tensorflow 1 version are both deprecated. For PyTorch you can use the new D4De/classes-pytorch repository. A more precise description of the usage of the framework with examples can be found can be found in the `example` folder. 
 
 ### Injection sites generator 
 
@@ -96,84 +92,80 @@ This function returns three lists:
 
 ### Supported operators
 The operators supported for the error simulation are the ones described in the enum [`OperatorType`](src/operators.py). Currently, we support the following layers (they are the ones used in Yolo, that is the case study considered in the paper):
-- Conv2D1x1: Convolution 2D with kernel size of 1.
-- Conv2D3x3: Convolution 2D with kernel size of 3.
-- Conv2D3x3S2: Convolution 2D with kernel size of 3 and stride of 2.
-- AddV2: Add between two tensors.
-- BiasAdd: Add between a tensor and a vector.
-- Mul: Multiplication between a tensor and a scalar.
-- FusedBatchNormV3: Batch normalization.
-- RealDiv: Division between a tensor and a scalar.
-- Exp: Exp activation function.
-- LeakyRelu: Leaky Relu activation function.
-- Sigmoid: Sigmoid activation function.
-- Add: Add between two tensors.
-- Conv2D: Convolution that does not fit the previous three descriptions
-- FusedBatchNorm: Batch normalization, needed to support some implementations of the layer
+- Convolution: 2d GEMM convolution 
+- Pooling: Max and Average 2d
+- Activations: Relu, Clipped Relu, Sigmoid, Tanh, Elu
+- Bias Add
 
 ### Error models
-We executed an error injection campaign on GPU to create error models that could be as loyal as possible to the real world. We define each model based
-on three parameters
+We executed an error injection campaign on GPU to create error models that could be as loyal as possible to the real world. The older error models used in classes were defined based on three parameters
 - Cardinality: the number of corrupted values observed in a faulty tensor with respect to the expected version.
 - Pattern: the spatial distribution of the corrupted values.
 - Values: the numerical value of the corrupted data.
 
-For each [supported operator](#operators-supported) we provide three different files describing each parameter. 
+These models were revised and rationalized in the thesis ![A novel approach for error modeling in a cross-layer reliability analysis of convolutional neural networks](https://www.politesi.polimi.it/bitstream/10589/210019/4/tesi_passarello_finale_2.pdf) and used in the following publications where CLASSES was employed. Now the models are build hierarchically, modeling the errors first by their spatial patterns, that are classes of corrupted tensors that have similar spatial distribution patterns. Example of spatial patterns are extracted from experiments performed on an Ampere GPU using NVBITFI we found these recurring patterns:
+1. **Single Point**: a single erroneous value is found in the output tensor.
 
-#### Anomalies count
-File `{operator}_anomalies_count.json` contains information about the cardinalities observed. The keys of the JSON are the cardinalities, and the associated values are lists of two parameters. The first is the number of times we found that specific cardinality and the second is its probability of occurrence.
+2. **Same Row**: all the erroneous values are located on the same row of a single channel. It is also possible to have non-corrupted values between two erroneous ones.
 
-#### Spatial model
+3. **Bullet Wake**: similar to *Same Row* model, but the erroneous values are located along the channel axis. It is also possible to have channels without erroneous values on the axis.
 
-File `{operator}_spatial_model.json` contains information about the spatial patterns.
-The keys of the json represent the cardinality for which we are describing the pattern, and the value connected to each key is another dictionary. If the key is "1" then this dictionary contains only the following data `"RANDOM": 1` since with only one corrupted parameter the concept of spatial pattern has no particular meaning. 
-Instead if the key is greater than one the dictionary will have two keys: FF and PF.
-Associated to the key FF we have a dictionary where each key has a possible value between 1 and 8 that represents the eight possible patterns that we observed. The values here are the probabilities of occurence for each pattern.
-Associated to the key PF instead we have the description, for each pattern, of the most common dispositions. 
-For a better understanding of this concept let's observe an example. Let's suppose that we have 5 corrupted values and we are targeting a Conv2D1x1 operator. The relevant information is the following 
+4. **Skip X**: erroneous values are located with a stride equal to *X* positions in the linearized tensor.
 
-```json
-"5": {
-    "FF": {"0": 0.5578512396694215, "4": 0.44008264462809915, "6": 0.002066115702479339},
-    "PF": {
-        "0": {"(0, 1, 2, 3, 4)": 0.13333333333333333, "RANDOM": 0.8666666666666667, "MAX": "15"},
-        "4": {"RANDOM": 1, "MAX": "15"},
-        "6": {"((0, (-8, 0)), (2, (0,)), (4, (-8, 0)))": 1, "RANDOM": 0, "MAX": [0, 0, 0, 0]}
-    }
-}
-```
-Here we can see that the patterns we observed for this cardinality are 
-- 0, or SAME_FEATURE_MAP_SAME_ROW
-- 4, or MULTIPLE_FEATURE_MAPS_BULLET_WAKE
-- 6, or MULTIPLE_FEATURE_MAPS_SHATTER_GLASS
+5. **Single Block**: there is a single corrupted channel, where all the erroneous values are adjacent and the cardinality is comprised between 10 and 64.
 
-If we select the pattern SAME_FEATURE_MAP_SAME_ROW we see two possibilites under PF. The first one, with a probability of 13%, is associated with the stride vector (0, 1, 2, 3, 4). This means that we will randomly select the position of the first corrupted value and then the other four values will be at a distance of 1, 2, 3, and 4 places respectively. 
-The second possibility is to randomly select the disposition of the five points. In this case we must keep track of the MAX value that represents the maximum distance between two consecutive corrupted values.
+6. **Single Channel Alternated Blocks**: multiple nonadjacent blocks of at least 16 consecutive erroneous values located in the same channel.
 
-#### Value analysis
-We define four different values obtainable by any given corrupted data. 
-- [-1, 1]: the corrupted value differs from the expected one by a value included between -1 and 1.
-- NaN: the corrupted value is NaN.
-- Zero: the corrupted value is zero and the expected one is not zero. 
-- Others: the corrupted value is a random number not included in the previous three classes.
+7. **Full Channel**: more than 70% of the values of the same channel are erroneous.
 
-`value_analysis.txt` contains the probabilities of each of the four cases to occur. 
+8. **Multichannel Block**: an extension of the *Single Block* model where multiple channels are corrupted, each with a single block pattern.
 
-### Fault injector
+9. **Shattered Channel**: a combination of the *Bullet Wake* and *Single Map Random* models where erroneous values are located on a line along the channel axis and at least one channel is randomly corrupted.
 
-The module used to perform the fault injection campaign has been developed in four different versions. 
+10. **Random**: either a single channel or multiple ones are corrupted with an irregular pattern.
+    
+For each occourring pattern the error models contains other two sub characterizations:
+* Spatial parameters, that allow to better generalize and characterized the spatial distributions. Examples of spatial parameters are:
+    - Percentage of channels of the tensors that are corrupted
+    - Maxium number of faults that are corrupted
+    - Interval (or skip) between two corrupted values in the linearized tensor.
+    Each spatial class has its own set of parameters.
+* Domain models, that models how the values are changed by the faults. To derive the domains models each corrupted value is first put in one of four Value Classes:
+    - In Range: The corrupted value remains inside the operating range of the golden tensor (i.e. ``[min(golden_tensor), max(golden_tensor)]``), but it is not exactly zero.
+    - Out of Range: The corrupted value falls of the operating range of the golden tensor.
+    - NaN: The value is NaN, or infinity
+    - Zero: The value is exactly zero.
+Then the tensor is classified in a Domain class that can be:
+    - Single Value Class: All errors belong to the same value class
+    - Double Value Class: All errors belong to only two different value classes. In this case the proportion of values is stored in the class.
+    - Random. The tensor is not on one of these two classes.
 
-### Tensorflow2
-### As a K function
+These error models are saved in the ```models``` folder, with one different json file per operator. CLASSES will read from these models and will generate error patters using the models specified in the json. 
+For a given operator the json file contains the relative frequency of each spatial pattern, and for each spatial pattern, there are the relative frequency for each configuration of spatial parameters and domain parameters. The injection site generator will pick at random a spatial pattern (with a probability equal to its relative frequency) and a configuration of spatial and domain parameters. The generator then picks the corrupted locations in the tensor by calling the pattern generator function corresponding to the picked spatial pattern (the code pattern generator functions are in ```src/pattern_generators```). For each corrupted location a value is picked based on the domain parameters distribution, and then the corrupted tensor is inserted in the network by the error simulator module described below.
+
+### Error Simulator
+
+The module used to perform the error simulation campaign in TensorFlow 2 has been developed in two different variants:
+
+#### As a K function
 
 Using Keras backend functions allows us to split a model into two separate submodels, one that performs the computation from the input layer to the one we selected for the injection and one that produces the final result from the output of the selected layer. With this approach we can obtain the selected layer's output and modify it before feeding it to the second submodel.
 If the model is not linear (e.g. a unet) this approach requires us to make sure that each skip connection is correctly set for the final output to be correctly produced. In the `example/tensorflow2/k_function` folder we provide two examples showing how to use this version of the error simulator on a linear model and on a model with skip connections.
 
-### As a layer
+#### As a layer
 
 We also developed the injector as a layer that can be placed into the module like any other keras layer. This approach simplifies the process in case of models with skip connections since we do not need to manually restore them but it has some drawbacks. The most important one is that due to how TensorFlow2 works we are not able to generate injection sites each time we perform a prediction, instead we need to create them at setup time and pass them as inputs to the layer. The injector will randomly select one at each prediction.
 
-### PyTorch
-### As a layer
-For the PyTorch version of the framework we only developed the layer version since we can freely execute python code
-during inference thus avoiding the problem of creating all the error models beforehand.
+
+## Examples
+
+Examples can be found in ``examples/tensorflow2`` directory.
+
+For example you can run one by doing:
+```
+cd examples/tensorflow2/as_a_layer
+
+python linear.py
+```
+
+
